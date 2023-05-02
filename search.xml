@@ -4,6 +4,44 @@
   
     
     <entry>
+      <title>8086汇编-必读内容（0）</title>
+      <link href="/2023/05/02/8086%E6%B1%87%E7%BC%96-0-%E5%BF%85%E8%AF%BB%E7%9F%A5%E8%AF%86/"/>
+      <url>/2023/05/02/8086%E6%B1%87%E7%BC%96-0-%E5%BF%85%E8%AF%BB%E7%9F%A5%E8%AF%86/</url>
+      
+        <content type="html"><![CDATA[<p>该内容是根据</p><p>王爽的《汇编语言》＋小甲鱼的b站视频所自己写的笔记。<br>初学者，可能又会很多不当之处</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 8086汇编 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>WIN32程序设计-第一个程序(2)</title>
+      <link href="/2023/05/02/win32%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1-2-%E7%AC%AC%E4%B8%80%E4%B8%AA%E7%A8%8B%E5%BA%8F%EF%BC%88win32%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%E7%9A%84%E5%85%A8%E9%83%A8%E8%BF%87%E7%A8%8B%EF%BC%89/"/>
+      <url>/2023/05/02/win32%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1-2-%E7%AC%AC%E4%B8%80%E4%B8%AA%E7%A8%8B%E5%BA%8F%EF%BC%88win32%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%E7%9A%84%E5%85%A8%E9%83%A8%E8%BF%87%E7%A8%8B%EF%BC%89/</url>
+      
+        <content type="html"><![CDATA[<h1 id="1-MASM32-SDK介绍"><a href="#1-MASM32-SDK介绍" class="headerlink" title="1.MASM32 SDK介绍"></a>1.MASM32 SDK介绍</h1><ul><li>目标是用汇编写出专业的大型程序：</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1.除了编译器，连接器外，还包含了汇编需要用到的各种详尽的头文件和导入库文件，导入库文件取自Visual C++ 的导入库</span><br><span class="line">2.收集来自世界各地Win32汇编爱好者的源程序以及很多详细的列子程序</span><br><span class="line">3.发布者还为他编写了一个简单的IDE环境，包括一个专用的汇编源程序编译器和源程模板生成器</span><br></pre></td></tr></table></figure><ul><li>安装目录说明</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">D:\masm32：IDE环境，内带文本编译程序和模板生成程序</span><br><span class="line">D:\masm32\include：所有的导入库文件</span><br><span class="line">D:\masm32\lib：所有的导入库文件</span><br><span class="line">D:\masm32\bin：可执行文件目录，包括ml.exe，link.exe,rc.exe</span><br><span class="line">D:\masm32\help:帮助文档</span><br><span class="line">D:\masm32\m32lib：一些常用的c子程序的汇编实现源程序，很有价值</span><br><span class="line">还有一些其他奇奇怪怪的好用的【以后再说】</span><br></pre></td></tr></table></figure><ul><li>经过了很久的调试，最终在我的电脑上，如果想用win32汇编需要如下操作【手动操作】</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1.在d:\masm32中运行cmd</span><br><span class="line">2.设置环境变量，这里用的是var.bat批处理【运行一下就好了】</span><br><span class="line">3.转到写得有汇编的目录下面【cd sources\test】</span><br><span class="line">4.首先用ml编译一下，【ml /c /coff /Cp *.asm】</span><br><span class="line">5.然后用link链接【link /subsystem:windows *.obj ...】</span><br><span class="line">6.就有exe文件啦</span><br></pre></td></tr></table></figure><ul><li>使用nmake ，快捷方式，首先在asm 的目录下创建一个 Makefile,内容如下。然后直接在cmd中运行 cmd</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">EXE = Test.exe#指定输出文件</span><br><span class="line">OBJS = Test.obj#需要的目标文件</span><br><span class="line">RES = Test.res#需要的资源文件</span><br><span class="line"></span><br><span class="line">LINK_FLAG = /subsystem:windows#连接选项</span><br><span class="line">ML_FLAG = /c /coff#编译选项</span><br><span class="line"></span><br><span class="line">$(EXE): $(OBJS) $(RES)</span><br><span class="line">Link $(LINK_FLAG) $(OBJS) $(RES)</span><br><span class="line"></span><br><span class="line">.asm.obj:</span><br><span class="line">ml $(ML_FLAG) $&lt;</span><br><span class="line">.rc.res:</span><br><span class="line">rc $&lt;</span><br><span class="line"></span><br><span class="line">clean:</span><br><span class="line">del *.obj</span><br><span class="line">del *.res</span><br></pre></td></tr></table></figure><ul><li>经过修改后：</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">EXE = test.exe#指定输出文件</span><br><span class="line">OBJS = test.obj#需要的目标文件</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">LINK_FLAG = /subsystem:windows#连接选项</span><br><span class="line">ML_FLAG = /c /coff#编译选项</span><br><span class="line"></span><br><span class="line">$(EXE): $(OBJS) </span><br><span class="line">Link $(LINK_FLAG) $(OBJS) </span><br><span class="line"></span><br><span class="line">.asm.obj:</span><br><span class="line">ml $(ML_FLAG) $&lt;</span><br></pre></td></tr></table></figure><ul><li>helloword–.asm文件</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">.386</span><br><span class="line">.model flat,stdcall</span><br><span class="line">option casemap:none</span><br><span class="line"></span><br><span class="line">include windows.inc</span><br><span class="line">include user32.inc</span><br><span class="line">includelib user32.lib</span><br><span class="line">include kernel32.inc</span><br><span class="line">includelib kernel32.lib</span><br><span class="line"></span><br><span class="line">.data</span><br><span class="line">szCaption db &#x27;A MessageBox&#x27;,0</span><br><span class="line">szText db &#x27;Hello,World!&#x27;,0</span><br><span class="line"></span><br><span class="line">.code</span><br><span class="line">start:</span><br><span class="line">invoke MessageBox,NULL,offset szText,\</span><br><span class="line">offset szCaption,MB_OK</span><br><span class="line"></span><br><span class="line">invoke ExitProcess,NULL</span><br><span class="line"></span><br><span class="line">end start</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
+      <categories>
+          
+          <category> WIN32程序设计 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>WIN32程序设计-必须了解的基础知识(1)</title>
       <link href="/2023/05/02/win32%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1-1-%E5%BF%85%E9%A1%BB%E4%BA%86%E8%A7%A3%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/"/>
       <url>/2023/05/02/win32%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1-1-%E5%BF%85%E9%A1%BB%E4%BA%86%E8%A7%A3%E7%9A%84%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/</url>
