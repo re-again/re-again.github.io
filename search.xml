@@ -4,6 +4,32 @@
   
     
     <entry>
+      <title></title>
+      <link href="/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-2-reverse-1/"/>
+      <url>/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-2-reverse-1/</url>
+      
+        <content type="html"><![CDATA[<h5 id="首先我们下载这个-exe"><a href="#首先我们下载这个-exe" class="headerlink" title="首先我们下载这个.exe"></a>首先我们下载这个.exe</h5><h5 id="下载之后用ida打开，在这之前其实需要脱壳【不懂】"><a href="#下载之后用ida打开，在这之前其实需要脱壳【不懂】" class="headerlink" title="下载之后用ida打开，在这之前其实需要脱壳【不懂】"></a>下载之后用ida打开，在这之前其实需要脱壳【不懂】</h5><h5 id="反正就是用ida×64打开"><a href="#反正就是用ida×64打开" class="headerlink" title="反正就是用ida×64打开"></a>反正就是用ida×64打开</h5><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413113656896.png" alt="image-20230413113656896"></p><h5 id="这里他提示说：有一个相关的pdb文件，是否要上传"><a href="#这里他提示说：有一个相关的pdb文件，是否要上传" class="headerlink" title="这里他提示说：有一个相关的pdb文件，是否要上传"></a>这里他提示说：有一个相关的pdb文件，是否要上传</h5><h5 id="其实没有-，所以点否。也可以点是，反正就是没有罢了"><a href="#其实没有-，所以点否。也可以点是，反正就是没有罢了" class="headerlink" title="其实没有 ，所以点否。也可以点是，反正就是没有罢了"></a>其实没有 ，所以点否。也可以点是，反正就是没有罢了</h5><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413113921221.png" alt="image-20230413113921221"></p><h5 id="打开过后就是这样，emmm毫无头绪，怎么办呢？"><a href="#打开过后就是这样，emmm毫无头绪，怎么办呢？" class="headerlink" title="打开过后就是这样，emmm毫无头绪，怎么办呢？"></a>打开过后就是这样，emmm毫无头绪，怎么办呢？</h5><h5 id="没有思路肯定就是要去所有的东西啦【shift-F12】【也可以在视图-打开子视图-字串】里面找到哦"><a href="#没有思路肯定就是要去所有的东西啦【shift-F12】【也可以在视图-打开子视图-字串】里面找到哦" class="headerlink" title="没有思路肯定就是要去所有的东西啦【shift+F12】【也可以在视图-打开子视图-字串】里面找到哦"></a>没有思路肯定就是要去所有的东西啦【shift+F12】【也可以在视图-打开子视图-字串】里面找到哦</h5><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413114307857.png" alt="image-20230413114307857"></p><h5 id="我们肯定是要找flag啦，这里有三个……-【我也是小白也不懂，先打开这个wrong-flag-】看看吧"><a href="#我们肯定是要找flag啦，这里有三个……-【我也是小白也不懂，先打开这个wrong-flag-】看看吧" class="headerlink" title="我们肯定是要找flag啦，这里有三个…….【我也是小白也不懂，先打开这个wrong flag 】看看吧"></a>我们肯定是要找flag啦，这里有三个…….【我也是小白也不懂，先打开这个wrong flag 】看看吧</h5><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413114530086.png" alt="image-20230413114530086"></p><h5 id="这说明这个-wrong-flag-这个字符串是存放在内存中的，emmm"><a href="#这说明这个-wrong-flag-这个字符串是存放在内存中的，emmm" class="headerlink" title="这说明这个 wrong flag 这个字符串是存放在内存中的，emmm"></a>这说明这个 wrong flag 这个字符串是存放在内存中的，emmm</h5><h5 id="这里就去看看谁引用了这个wrong-flag吧【这里是用的“交叉引用”-右键-点击-或者用ctrl-x】"><a href="#这里就去看看谁引用了这个wrong-flag吧【这里是用的“交叉引用”-右键-点击-或者用ctrl-x】" class="headerlink" title="这里就去看看谁引用了这个wrong flag吧【这里是用的“交叉引用” 右键-点击   或者用ctrl+x】"></a>这里就去看看谁引用了这个wrong flag吧【这里是用的“交叉引用” 右键-点击   或者用ctrl+x】</h5><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413114756665.png" alt="image-20230413114756665"></p><h5 id="打开过后是这样的一个东西【这样的一看就是汇编啦】"><a href="#打开过后是这样的一个东西【这样的一看就是汇编啦】" class="headerlink" title="打开过后是这样的一个东西【这样的一看就是汇编啦】"></a>打开过后是这样的一个东西【这样的一看就是汇编啦】</h5><h5 id="所以我们就用-Tab-键-来看伪代码咯-【F5】"><a href="#所以我们就用-Tab-键-来看伪代码咯-【F5】" class="headerlink" title="所以我们就用 Tab 键 来看伪代码咯  【F5】"></a>所以我们就用 Tab 键 来看伪代码咯  【F5】</h5><h5 id="它有一个提示：反正就会说可能会有误差啥的-不管他"><a href="#它有一个提示：反正就会说可能会有误差啥的-不管他" class="headerlink" title="它有一个提示：反正就会说可能会有误差啥的..不管他"></a>它有一个提示：反正就会说可能会有误差啥的..不管他</h5><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413115016692.png" alt="image-20230413115016692"></p><h5 id="打开就是这样的，读一读咯【这里很类似于C语言】"><a href="#打开就是这样的，读一读咯【这里很类似于C语言】" class="headerlink" title="打开就是这样的，读一读咯【这里很类似于C语言】"></a>打开就是这样的，读一读咯【这里很类似于C语言】</h5><h5 id="然后就是大概的看-里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag"><a href="#然后就是大概的看-里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag" class="headerlink" title="然后就是大概的看    里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag"></a>然后就是大概的看    里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag</h5><h5 id="去查看字符串Str2"><a href="#去查看字符串Str2" class="headerlink" title="去查看字符串Str2"></a>去查看字符串Str2</h5><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413115354464.png" alt="image-20230413115354464"></p><h5 id="最后就需要把111改成48就好了"><a href="#最后就需要把111改成48就好了" class="headerlink" title="最后就需要把111改成48就好了"></a>最后就需要把111改成48就好了</h5><h5 id="flag"><a href="#flag" class="headerlink" title="flag"></a>flag</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flag&#123;hell0_w0rld&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title></title>
+      <link href="/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-1-easyre/"/>
+      <url>/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-1-easyre/</url>
+      
+        <content type="html"><![CDATA[<p>就是用ida打开后查看</p><p>一下就看到了flag … </p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>逆向-IDA linux下的反编译命令-objdump（20）</title>
       <link href="/2023/05/17/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-20-linux%E4%B8%8B%E7%9A%84%E5%8F%8D%E7%BC%96%E8%AF%91%E5%91%BD%E4%BB%A4-objdump/"/>
       <url>/2023/05/17/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-20-linux%E4%B8%8B%E7%9A%84%E5%8F%8D%E7%BC%96%E8%AF%91%E5%91%BD%E4%BB%A4-objdump/</url>
@@ -42,12 +68,18 @@
     
     
     <entry>
-      <title></title>
-      <link href="/2023/05/16/kali%E5%B7%A5%E5%85%B7%E5%A4%A7%E6%9D%82%E7%83%A9-Binwalk/"/>
-      <url>/2023/05/16/kali%E5%B7%A5%E5%85%B7%E5%A4%A7%E6%9D%82%E7%83%A9-Binwalk/</url>
+      <title>binwalk工具（1）</title>
+      <link href="/2023/05/16/kali%E5%B7%A5%E5%85%B7-%E5%91%BD%E4%BB%A4-%E5%A4%A7%E6%9D%82%E7%83%A9-1-Binwalk/"/>
+      <url>/2023/05/16/kali%E5%B7%A5%E5%85%B7-%E5%91%BD%E4%BB%A4-%E5%A4%A7%E6%9D%82%E7%83%A9-1-Binwalk/</url>
       
         <content type="html"><![CDATA[<h1 id="对固件分析的一个工具"><a href="#对固件分析的一个工具" class="headerlink" title="对固件分析的一个工具"></a>对固件分析的一个工具</h1><p><a href="https://blog.csdn.net/weixin_44932880/article/details/112478699">https://blog.csdn.net/weixin_44932880/article/details/112478699</a></p><p><a href="https://blog.csdn.net/wxh0000mm/article/details/85683661">https://blog.csdn.net/wxh0000mm/article/details/85683661</a></p><p>1.<strong>学一个工具肯定要会看它的帮助的文档啦</strong></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">binwalk -h 或 binwalk --help</span><br></pre></td></tr></table></figure><p>【每次看这个玩意的时候，我都好像把洋文学牛皮。或者说多认识点单词】</p><p>2.<strong>固件分析扫描</strong></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">binwalk 固件</span><br><span class="line">比如：binwalk 1.jpg</span><br></pre></td></tr></table></figure><p>3.<strong>提取文件</strong></p><p>-e 按照预定义的配置文件中的提取方法，从固件中提取探测到的文件以及系统</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">binwalk -e 1.jpg</span><br></pre></td></tr></table></figure><p>-d 用于限制递归提取的深度，默认深度为8，仅当“-M”选项存在的时候有效</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">binwalk -Me -d 5 1.jpg</span><br></pre></td></tr></table></figure>]]></content>
       
+      
+      <categories>
+          
+          <category> kali工具/命令大杂烩 </category>
+          
+      </categories>
       
       
     </entry>
@@ -306,7 +338,7 @@
       <link href="/2023/05/06/%E6%80%BB%E7%BB%93/"/>
       <url>/2023/05/06/%E6%80%BB%E7%BB%93/</url>
       
-        <content type="html"><![CDATA[<h1 id="2023-5-6"><a href="#2023-5-6" class="headerlink" title="2023-5-6"></a>2023-5-6</h1><p>最近稍微接触一下逆向吧。这个路还蛮遥远的…</p><p>看了一篇文章，稍微记录一下未来日子所需要学的东西</p><p>文章：<a href="https://www.52pojie.cn/thread-1324083-1-1.html">https://www.52pojie.cn/thread-1324083-1-1.html</a></p><p>1.计算机组成原理–<strong>《计算机组成原理》白中英</strong></p><p>2.8086汇编–<strong>《汇编语言（第四版）》王爽</strong></p><p>3.WIN32汇编–<strong>《windows环境下32位汇编语言程序设计》罗云彬</strong></p><p>4.找一本64位的书–<strong>《x86_x64体系探索及编程》</strong></p><p>5.扩展：深入汇编，<strong>《汇编语言编程艺术》《intel汇编语言程序设计》《IBM PC汇编语言程序设计》</strong></p><p>6.C语言–<strong>《C Primer Plus》《C程序设计语言》</strong>入门之作品</p><p>7.深入学编程–<strong>《C陷阱于缺陷》《C专家汇编》《程序员的自我修养》</strong></p><p>8.C++ – <strong>《C++ Primer Plus》</strong></p><p>9.算法于数据结构–<strong>《数据结构（C语言版）》严薇《算法图解》《算法导论》《数据结构与算法分析：C语言描述》</strong></p><p>10.加密和解密– 《<strong>加密与解密</strong>》看雪</p><p>11.逆向知识点–《<strong>C++反汇编与逆向分析技术揭秘</strong>》《<strong>REVERSING：逆向工程揭密</strong>》《<strong>逆向工程核心原理</strong>》</p><p>12.API基础–《<strong>Windows程序设计</strong>》</p><p>13.VC++ –《<strong>VC++深入详解</strong>》，高级语言有目的性的学习</p><p>14.windows系统原理 – 《<strong>深入理解计算机系统</strong>》，《<strong>WINDOWS.核心编程</strong>》，《<strong>IDA Pro权威指南</strong>》</p><p>15.WIN PE  《<strong>windows pe权威指南</strong>》</p><p>16.Windows驱动  《<strong>Windows内核安全与驱动开发</strong>》，《<strong>Windows驱动开发技术详解</strong>》</p><hr><p>哈哈哈哈！任重而道远啊~</p><p>我在学到这个win32的时候，实属有点枯燥无力。所以最近去研究研究了一下二进制安全–这个内容是更着网上的教程一步一步走的。怎么说呢，我如果按照上面的顺序学下来，哈哈哈可能有点脑壳痛。所以呢，这个就按照着这个路线的大概的循序下去。中间插入小插曲，比如【二进制安全的学习】…想学的东西太多啦，要学的东西也很多，时间总是过得如此的快，今天又到了晚上11：36了。</p><p>学安全嘛，各个方向都懂一点，有一项很专精，就会很厉害。经过我对这个渗透和逆向的了解。我确实都喜欢，哈哈哈哈。反正日子还多嘞，现在才19岁，还没到20岁【我还年轻，未来都是我的】哈哈哈~~~</p><p>送我自己一段话吧：<br>我的快乐别人不懂，别人的快乐我不必懂~</p><p>希望我能在这条路上越行越远~</p><hr><p>也许这个魔改的日子要往后调整了，待我暑假吧~</p><h1 id="2023-5-14"><a href="#2023-5-14" class="headerlink" title="2023-5-14"></a>2023-5-14</h1><p>这周也没有放弃，也在认真的更新自己的二进制安全的文章。</p><p>加油加油！！<br>今天安装插件。蛮奇怪的，，，，最后装了一个集成版本的…..<br>希望以后能多出CTF题目吧…..<br>还有C 语言的 学习呢…</p>]]></content>
+        <content type="html"><![CDATA[<h1 id="2023-5-14"><a href="#2023-5-14" class="headerlink" title="2023-5-14"></a>2023-5-14</h1><p>这周也没有放弃，也在认真的更新自己的二进制安全的文章。</p><p>加油加油！！<br>今天安装插件。蛮奇怪的，，，，最后装了一个集成版本的…..<br>希望以后能多出CTF题目吧…..<br>还有C 语言的 学习呢…</p><hr><h1 id="2023-5-6"><a href="#2023-5-6" class="headerlink" title="2023-5-6"></a>2023-5-6</h1><p>最近稍微接触一下逆向吧。这个路还蛮遥远的…</p><p>看了一篇文章，稍微记录一下未来日子所需要学的东西</p><p>文章：<a href="https://www.52pojie.cn/thread-1324083-1-1.html">https://www.52pojie.cn/thread-1324083-1-1.html</a></p><p>1.计算机组成原理–<strong>《计算机组成原理》白中英</strong></p><p>2.8086汇编–<strong>《汇编语言（第四版）》王爽</strong></p><p>3.WIN32汇编–<strong>《windows环境下32位汇编语言程序设计》罗云彬</strong></p><p>4.找一本64位的书–<strong>《x86_x64体系探索及编程》</strong></p><p>5.扩展：深入汇编，<strong>《汇编语言编程艺术》《intel汇编语言程序设计》《IBM PC汇编语言程序设计》</strong></p><p>6.C语言–<strong>《C Primer Plus》《C程序设计语言》</strong>入门之作品</p><p>7.深入学编程–<strong>《C陷阱于缺陷》《C专家汇编》《程序员的自我修养》</strong></p><p>8.C++ – <strong>《C++ Primer Plus》</strong></p><p>9.算法于数据结构–<strong>《数据结构（C语言版）》严薇《算法图解》《算法导论》《数据结构与算法分析：C语言描述》</strong></p><p>10.加密和解密– 《<strong>加密与解密</strong>》看雪</p><p>11.逆向知识点–《<strong>C++反汇编与逆向分析技术揭秘</strong>》《<strong>REVERSING：逆向工程揭密</strong>》《<strong>逆向工程核心原理</strong>》</p><p>12.API基础–《<strong>Windows程序设计</strong>》</p><p>13.VC++ –《<strong>VC++深入详解</strong>》，高级语言有目的性的学习</p><p>14.windows系统原理 – 《<strong>深入理解计算机系统</strong>》，《<strong>WINDOWS.核心编程</strong>》，《<strong>IDA Pro权威指南</strong>》</p><p>15.WIN PE  《<strong>windows pe权威指南</strong>》</p><p>16.Windows驱动  《<strong>Windows内核安全与驱动开发</strong>》，《<strong>Windows驱动开发技术详解</strong>》</p><hr><p>哈哈哈哈！任重而道远啊~</p><p>我在学到这个win32的时候，实属有点枯燥无力。所以最近去研究研究了一下二进制安全–这个内容是更着网上的教程一步一步走的。怎么说呢，我如果按照上面的顺序学下来，哈哈哈可能有点脑壳痛。所以呢，这个就按照着这个路线的大概的循序下去。中间插入小插曲，比如【二进制安全的学习】…想学的东西太多啦，要学的东西也很多，时间总是过得如此的快，今天又到了晚上11：36了。</p><p>学安全嘛，各个方向都懂一点，有一项很专精，就会很厉害。经过我对这个渗透和逆向的了解。我确实都喜欢，哈哈哈哈。反正日子还多嘞，现在才19岁，还没到20岁【我还年轻，未来都是我的】哈哈哈~~~</p><p>送我自己一段话吧：<br>我的快乐别人不懂，别人的快乐我不必懂~</p><p>希望我能在这条路上越行越远~</p><hr><p>也许这个魔改的日子要往后调整了，待我暑假吧~</p>]]></content>
       
       
       
