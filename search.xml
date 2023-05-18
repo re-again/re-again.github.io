@@ -4,6 +4,25 @@
   
     
     <entry>
+      <title>逆向-OD介绍和基本操作（21）</title>
+      <link href="/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-21-OD%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/"/>
+      <url>/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-21-OD%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/</url>
+      
+        <content type="html"><![CDATA[<h1 id="OD介绍和基本的操作"><a href="#OD介绍和基本的操作" class="headerlink" title="OD介绍和基本的操作"></a>OD介绍和基本的操作</h1><p>一个动态调试的反汇编工具</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518160143000.png" alt="image-20230518160143000" style="zoom:50%;" /><p>这个是打开后的样子，上面有选型，下边有几个不同作用的窗口。我们尝试把一个文件放进去看看。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518160450558.png" alt="image-20230518160450558"></p><p>首先是上面的地方，有文件，插件….</p><p>下面有一个【暂停】字样，这个来看程序是运行的还是暂停的，然后右边有2个黑色的三角形是重新加载程序，X是退出。</p><p>红色的三角形是运行程序，后面带有箭头和好几个点的是运行程序，每一个意思不一样，单步运行啊，单步步过啊。。。啥的</p><p>后面一串洋文的东西，就是一系列窗口，说不明白，还得自己多尝试</p><p>中间是汇编的主要的窗口，右边是寄存器窗口，左下是数据的窗口，在主窗口和数据窗口中还有一个小的窗口，右下是栈窗口。</p><p>上面那个插件蛮好用的。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518160943254.png" alt="image-20230518160943254" style="zoom:50%;" /><p>蛮多的。</p><p>功能不介绍【主要我也不知道】</p><p>我知道一个API断点设置工具</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518161039183.png" alt="image-20230518161039183" style="zoom:50%;" /><p>主要就是对于不同的API函数进行设置断点的工具。</p><p>主要还是得靠实际操作。</p><hr><h1 id="去除花指令"><a href="#去除花指令" class="headerlink" title="去除花指令"></a>去除花指令</h1><p>花指令就是恶心别人。加一些没用的东西。</p><p>可以用OD中的插件去除啦。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518161821473.png" alt="image-20230518161821473"></p><p>找到含有花指令函数的头部，然后选中它，点击插件里面的DeJunk 就可以去掉了</p><h1 id="脱壳之：ESP定律去除OEP"><a href="#脱壳之：ESP定律去除OEP" class="headerlink" title="脱壳之：ESP定律去除OEP"></a>脱壳之：ESP定律去除OEP</h1><p>啥是OEP？</p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230518162053514.png" alt="image-20230518162053514" style="zoom:50%;" /><p>这里实战一下啦</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518162410809.png" alt="image-20230518162410809"></p><p>可以看到，这个程序有一个UPX的壳.</p><p>咋说呢…</p><p>这里有一个UPX自动脱壳的工具</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518162839734.png" alt="image-20230518162839734" style="zoom:50%;" /><p>这样就脱壳了。但是不够优雅</p><p>我们用OD的esp定律来手动脱壳</p><p>进入软件，F8单步</p><p>当esp变成红色</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518163355348.png" alt="image-20230518163355348" style="zoom:50%;" /><p>找到第一个数据的地方，右键-断点-硬件访问-Word</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518163318315.png" alt="image-20230518163318315" style="zoom:50%;" /><p>F9跑起来啦</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518163529066.png" alt="image-20230518163529066" style="zoom:50%;" /><p>到这里，下面这个jmp 跳转就是程序入口的地方。</p><p>然后在黑色窗口输入一点东西，然后继续F9</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518163823417.png" alt="image-20230518163823417" style="zoom:50%;" /><p>现在就是跳到了程序真的入口点</p><p>插件OllyDump</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518164155517.png" alt="image-20230518164155517" style="zoom:50%;" /><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518164233713.png" alt="image-20230518164233713" style="zoom:50%;" /><p>ok </p><p>这样就无壳了</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 二进制安全逆向 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>2.reverse_1（2）</title>
       <link href="/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-2-reverse-1/"/>
       <url>/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-2-reverse-1/</url>
