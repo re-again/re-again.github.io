@@ -4,38 +4,56 @@
   
     
     <entry>
-      <title></title>
+      <title>逆向-linux动态调试之GDB（26）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-26-Linux%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%A5%9E%E5%99%A8%E4%B9%8BGDB%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-26-Linux%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%A5%9E%E5%99%A8%E4%B9%8BGDB%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8/</url>
       
         <content type="html"><![CDATA[<h1 id="Linux动态调试神器之GDB简介及使用"><a href="#Linux动态调试神器之GDB简介及使用" class="headerlink" title="Linux动态调试神器之GDB简介及使用"></a>Linux动态调试神器之GDB简介及使用</h1><h2 id="GDB简介"><a href="#GDB简介" class="headerlink" title="GDB简介"></a>GDB简介</h2><p>这个是在Linux下的一个动态调试，和OD功能上应该差不多。</p><h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><ul><li><p>和OD差不多，但是看不到原文，所以要和IDA一起用</p></li><li><p>暂停【然后调试】</p></li><li><p>除此之外，GDB还具有一些独具特色的功能，如命令自动补全功能、命令</p><p>行编辑功能、面向对象语言支持（如C++）、多线程支持等。</p></li></ul><h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><h3 id="gdb"><a href="#gdb" class="headerlink" title="gdb"></a>gdb</h3><p>打开文件</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gdb hero</span><br></pre></td></tr></table></figure><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521190849865.png" alt="image-20230521190849865" style="zoom:50%;" /><h3 id="quit"><a href="#quit" class="headerlink" title="quit"></a>quit</h3><p>退出</p><p>也可以用 ctrl+ c【一个消耗时间的】或者 ctrl + d【就是退出，相当于quit】</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521191003690.png" alt="image-20230521191003690"></p><h3 id="help"><a href="#help" class="headerlink" title="help"></a>help</h3><p>可以使用help命令，来得到GDB的帮助信息。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521191302618.png" alt="image-20230521191302618" style="zoom:50%;" /><p>这个help 会大概列出来</p><p>然后可以选中一个再help 就可以看到详细的内容。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521192410070.png" alt="image-20230521192410070" style="zoom:50%;" /><h1 id="网鼎杯2020真题-hero"><a href="#网鼎杯2020真题-hero" class="headerlink" title="网鼎杯2020真题-hero"></a>网鼎杯2020真题-hero</h1><p>首先用010 打开看看</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521195516646.png" alt="image-20230521195516646" style="zoom:50%;" /><p>发现是一个elf 文件，去kali里面运行一下</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521195546759.png" alt="image-20230521195546759" style="zoom:50%;" /><p>发现大致就是一个闯关打boss的，应该是只要通关就可以得到flag</p><p>放入IDA中看看</p><p>通过这个字符串搜索找到这个位置</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521200757904.png" alt="image-20230521200757904"></p><p>应该就是这里，然后F5一下</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521200941100.png" alt="image-20230521200941100"></p><p>这里大概就是能打过boss的战斗力</p><p>10000/30000/50000</p><p>….</p><p>然后找到</p><p>每一个跳转语句</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521201204657.png" alt="image-20230521201204657"></p><p>知道这个就是一个cmp eax和10000/30000/50000相互比较</p><p>得到的地址：</p><p>.text:000000000040165C</p><p>.text:00000000004016BC</p><p>.text:00000000004015F9</p><p>讲实话，如果是在OD里面我可以直接把flag中的值改掉，直接就不跳转。应该思路没啥问题。</p><p>这里我们也可以手动设置eax中的值的大小</p><p>然后在gdb 中 在这三个地方设置断点</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521202016922.png" alt="image-20230521202016922" style="zoom:50%;" /><p>用b 来设置断点</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">b *0x4015F9 b *0x40165C b *0x4016BC</span><br></pre></td></tr></table></figure><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521202403684.png" alt="image-20230521202403684"></p><h2 id="姿势1"><a href="#姿势1" class="headerlink" title="姿势1"></a>姿势1</h2><p>然后就是，运行过去，然后设置eax中的值，让它大于500000就好了</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521202536717.png" alt="image-20230521202536717" style="zoom:50%;" /><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521202918567.png" alt="image-20230521202918567" style="zoom:50%;" /><p>ok 打赢了怪兽</p><h2 id="姿势2"><a href="#姿势2" class="headerlink" title="姿势2"></a>姿势2</h2><p>整数溢出</p><p>【百度】</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521203223629.png" alt="image-20230521203223629" style="zoom:50%;" /><p>由于这段代码出现的问题</p><p>它写的是%d</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521203718500.png" alt="image-20230521203718500" style="zoom:50%;" /><p>所以int形的</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521203735233.png" alt="image-20230521203735233"></p><p>是一种int 形式的，并且攻击力和硬币都是由于v1来控制的。所以</p><p>int 型表示的十进制数据范围是-2147483648-2147483647 ，当v2&gt;2147483647时会造成整数溢出，溢</p><p>出后就会变为负数。故当v2 mod 2147483647时，能够执行充值硬币和攻击力，即(coin -2 x v2) mod</p><p>2147483648 &lt;= 2147483647 。</p><p>当v2 mod 2147483648 &gt;= 107374183647 时可执行 elf += v2 ，coin += v3</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230521204410174.png" alt="image-20230521204410174"></p>]]></content>
       
       
+      <categories>
+          
+          <category> 二进制安全逆向 </category>
+          
+      </categories>
+      
       
     </entry>
     
     
     
     <entry>
-      <title></title>
+      <title>逆向-Windbg（25）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-25-Windbg-%E5%92%8C-Windbg-preview%E4%BB%8B%E7%BB%8D/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-25-Windbg-%E5%92%8C-Windbg-preview%E4%BB%8B%E7%BB%8D/</url>
       
         <content type="html"><![CDATA[<h1 id="Windbg与Windbg-preview简介及使用"><a href="#Windbg与Windbg-preview简介及使用" class="headerlink" title="Windbg与Windbg preview简介及使用"></a>Windbg与Windbg preview简介及使用</h1><h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><p><strong>windbg</strong></p><p>是在windows平台下，强大的用户态和内核态调试工具</p><p><strong>dmp</strong></p><p>内存映像文件，一般是系统错误产生的文件</p><p><strong>pbd</strong></p><p>程序数据库文件</p><p><strong>symbol</strong></p><p>符号文件（symbol files）是一个数据信息文件，它包含了应用程序二进制文件（比如：exe，dll）调试信息</p><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>windbg 比 vs 在体型下小，在调试功能上强大。</p><p>windbg 还可以用来分析dump 数据 ，还可以调试进程死锁之类的。支持命令的方式。</p><p>《Windows用户态程序高效排错》《Windows高级调试》《软件调试》，有机会读读书。</p><h2 id="下载"><a href="#下载" class="headerlink" title="下载"></a>下载</h2><p>csdn 下载</p><p>…</p><p>以后再说吧。现在不想下。</p>]]></content>
       
       
+      <categories>
+          
+          <category> 二进制安全逆向 </category>
+          
+      </categories>
+      
       
     </entry>
     
     
     
     <entry>
-      <title></title>
+      <title>逆向-x_96_dbg介绍（24）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-24-x-96-dbg%E4%BB%8B%E7%BB%8D/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-24-x-96-dbg%E4%BB%8B%E7%BB%8D/</url>
       
         <content type="html"><![CDATA[<h1 id="X96-dbg简介及基本操作"><a href="#X96-dbg简介及基本操作" class="headerlink" title="X96_dbg简介及基本操作"></a>X96_dbg简介及基本操作</h1><p>由于od 只能 调试32位的。所以对于64位的就不好操作了。</p><p>自然就有x96DBG出来了，分为X32 和 X64 22两种</p><h2 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h2><p>基本和OD一样</p><p>Ctrl+F9: 执行到函数返回处，用于跳出函数实现</p><p>Alt+F9:执行到用户代码，用于快速跳出系统函数</p><p>Ctrl+G:输入十六进制地址，快速定位到该地址处</p><h1 id="实战一下"><a href="#实战一下" class="headerlink" title="实战一下"></a>实战一下</h1><p>也就是一个猜数字游戏，只要一次猜对就可以得到flag</p><p>很简单</p><p>有2种方法，第一种就是直接改flag寄存器,控制跳转。</p><p>还有一个就是，它的判断跳转语句 直接改成  jmp +  “猜对了”</p>]]></content>
       
+      
+      <categories>
+          
+          <category> 二进制安全逆向 </category>
+          
+      </categories>
       
       
     </entry>
