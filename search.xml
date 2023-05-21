@@ -4,16 +4,16 @@
   
     
     <entry>
-      <title>2.reverse_2（3）</title>
-      <link href="/2023/05/18/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-3-reverse-2/"/>
-      <url>/2023/05/18/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-3-reverse-2/</url>
+      <title>2.BUU-reverse_2（3）</title>
+      <link href="/2023/05/18/Re%E5%88%B7%E9%A2%98%E5%92%AF-3-BUU-reverse-2/"/>
+      <url>/2023/05/18/Re%E5%88%B7%E9%A2%98%E5%92%AF-3-BUU-reverse-2/</url>
       
         <content type="html"><![CDATA[<h5 id="这道题和【reverse-1】的思路是一样的，找到flag的位置，看代码"><a href="#这道题和【reverse-1】的思路是一样的，找到flag的位置，看代码" class="headerlink" title="这道题和【reverse_1】的思路是一样的，找到flag的位置，看代码"></a>这道题和【reverse_1】的思路是一样的，找到flag的位置，看代码</h5><h5 id="有一点不同就是，下下来的时候是没有后缀的，需要人为的给上-exe的后缀"><a href="#有一点不同就是，下下来的时候是没有后缀的，需要人为的给上-exe的后缀" class="headerlink" title="有一点不同就是，下下来的时候是没有后缀的，需要人为的给上.exe的后缀"></a>有一点不同就是，下下来的时候是没有后缀的，需要人为的给上.exe的后缀</h5><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230415222706104.png" alt="image-20230415222706104"></p><h5 id="然后去看flag，把里面的-i和r变成1就好了"><a href="#然后去看flag，把里面的-i和r变成1就好了" class="headerlink" title="然后去看flag，把里面的 i和r变成1就好了"></a>然后去看flag，把里面的 i和r变成1就好了</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flag&#123;hack1ng_fo1_fun&#125;</span><br></pre></td></tr></table></figure>]]></content>
       
       
       <categories>
           
-          <category> BUUCTF逆向题目 </category>
+          <category> Re题目 </category>
           
       </categories>
       
@@ -27,7 +27,7 @@
       <link href="/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-23-OD%E5%AE%9E%E6%88%98%E8%AE%AD%E7%BB%83%E5%88%86%E6%9E%90%E8%A7%A3%E5%AF%86%E7%AE%97%E6%B3%95/"/>
       <url>/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-23-OD%E5%AE%9E%E6%88%98%E8%AE%AD%E7%BB%83%E5%88%86%E6%9E%90%E8%A7%A3%E5%AF%86%E7%AE%97%E6%B3%95/</url>
       
-        <content type="html"><![CDATA[<p>本题来自Buuctf 中的 crackMe。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220305304.png" alt="image-20230518220305304" style="zoom:50%;" /><hr><p>小张从网上下载到一个黑客软件，然而开发者并不打算共享，所以小张注册了一个用户名叫welcomebeijing，但是密码需要进行逆向计算，请求出密码，进行MD5的32位小写哈希，进行提交。 </p><hr><p>下载下来。运行一下。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220532525.png" alt="image-20230518220532525" style="zoom:50%;" /><p>由于题目中说了“一个用户名叫welcomebeijing”，但是不知道密码，但是知道“密码需要进行逆向计算，请求出密码，进行MD5的32位小写哈希”</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220657978.png" alt="image-20230518220657978" style="zoom:50%;" /><p>无壳..放入IDA中看看咯</p><p>刚刚放进去</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220847832.png" alt="image-20230518220847832" style="zoom:50%;" /><p>就看到这个come one ！感觉地方已经找到了。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518221147605.png" alt="image-20230518221147605" style="zoom:50%;" /><p>这里v6就是账号，v7是密码。</p><hr><p>【这里有一个memset函数】虽然感觉分析它用处不大，但毕竟是为了学习，何乐而不为呢？</p><p>C 库函数 <strong>void *memset(void *str, int c, size_t n)</strong> 复制字符 <strong>c</strong>（一个无符号字符）到参数 <strong>str</strong> 所指向的字符串的前 <strong>n</strong> 个字符。</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line"> </span><br><span class="line">int main ()</span><br><span class="line">&#123;</span><br><span class="line">   char str[50];</span><br><span class="line"> </span><br><span class="line">   strcpy(str,&quot;This is string.h library function&quot;);</span><br><span class="line">   puts(str);</span><br><span class="line"> </span><br><span class="line">   memset(str,&#x27;$&#x27;,7);</span><br><span class="line">   puts(str);</span><br><span class="line">   </span><br><span class="line">   return(0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>编译后得到的是</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">This is string.h library function</span><br><span class="line">$$$$$$$ string.h library function</span><br></pre></td></tr></table></figure><p>memset(v6, 0, sizeof(v6));这个意思就是填充成0咯</p><hr><p>点进去看一看这个对账号密码处理的函数</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518222948163.png" alt="image-20230518222948163" style="zoom:50%;" />]]></content>
+        <content type="html"><![CDATA[<p>本题来自Buuctf 中的 crackMe。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220305304.png" alt="image-20230518220305304" style="zoom:50%;" /><hr><p>小张从网上下载到一个黑客软件，然而开发者并不打算共享，所以小张注册了一个用户名叫welcomebeijing，但是密码需要进行逆向计算，请求出密码，进行MD5的32位小写哈希，进行提交。 </p><hr><p>下载下来。运行一下。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220532525.png" alt="image-20230518220532525" style="zoom:50%;" /><p>由于题目中说了“一个用户名叫welcomebeijing”，但是不知道密码，但是知道“密码需要进行逆向计算，请求出密码，进行MD5的32位小写哈希”</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220657978.png" alt="image-20230518220657978" style="zoom:50%;" /><p>无壳..放入IDA中看看咯</p><p>刚刚放进去</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518220847832.png" alt="image-20230518220847832" style="zoom:50%;" /><p>就看到这个come one ！感觉地方已经找到了。</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518221147605.png" alt="image-20230518221147605" style="zoom:50%;" /><p>这里v6就是账号，v7是密码。</p><hr><p>【这里有一个memset函数】虽然感觉分析它用处不大，但毕竟是为了学习，何乐而不为呢？</p><p>C 库函数 <strong>void *memset(void *str, int c, size_t n)</strong> 复制字符 <strong>c</strong>（一个无符号字符）到参数 <strong>str</strong> 所指向的字符串的前 <strong>n</strong> 个字符。</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line"> </span><br><span class="line">int main ()</span><br><span class="line">&#123;</span><br><span class="line">   char str[50];</span><br><span class="line"> </span><br><span class="line">   strcpy(str,&quot;This is string.h library function&quot;);</span><br><span class="line">   puts(str);</span><br><span class="line"> </span><br><span class="line">   memset(str,&#x27;$&#x27;,7);</span><br><span class="line">   puts(str);</span><br><span class="line">   </span><br><span class="line">   return(0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>编译后得到的是</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">This is string.h library function</span><br><span class="line">$$$$$$$ string.h library function</span><br></pre></td></tr></table></figure><p>memset(v6, 0, sizeof(v6));这个意思就是填充成0咯</p><hr><p>点进去看一看这个对账号密码处理的函数</p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230518222948163.png" alt="image-20230518222948163" style="zoom:50%;" /><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230519073336091.png" alt="image-20230519073336091"></p>]]></content>
       
       
       <categories>
@@ -80,16 +80,16 @@
     
     
     <entry>
-      <title>2.reverse_1（2）</title>
-      <link href="/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-2-reverse-1/"/>
-      <url>/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-2-reverse-1/</url>
+      <title>2.BUU-reverse_1（2）</title>
+      <link href="/2023/05/17/Re%E5%88%B7%E9%A2%98%E5%92%AF-2-BUU-reverse-1/"/>
+      <url>/2023/05/17/Re%E5%88%B7%E9%A2%98%E5%92%AF-2-BUU-reverse-1/</url>
       
         <content type="html"><![CDATA[<h5 id="首先我们下载这个-exe"><a href="#首先我们下载这个-exe" class="headerlink" title="首先我们下载这个.exe"></a>首先我们下载这个.exe</h5><h5 id="下载之后用ida打开，在这之前其实需要脱壳【不懂】"><a href="#下载之后用ida打开，在这之前其实需要脱壳【不懂】" class="headerlink" title="下载之后用ida打开，在这之前其实需要脱壳【不懂】"></a>下载之后用ida打开，在这之前其实需要脱壳【不懂】</h5><h5 id="反正就是用ida×64打开"><a href="#反正就是用ida×64打开" class="headerlink" title="反正就是用ida×64打开"></a>反正就是用ida×64打开</h5><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230413113656896.png" alt="image-20230413113656896" style="zoom: 33%;" /><h5 id="这里他提示说：有一个相关的pdb文件，是否要上传"><a href="#这里他提示说：有一个相关的pdb文件，是否要上传" class="headerlink" title="这里他提示说：有一个相关的pdb文件，是否要上传"></a>这里他提示说：有一个相关的pdb文件，是否要上传</h5><h5 id="其实没有-，所以点否。也可以点是，反正就是没有罢了"><a href="#其实没有-，所以点否。也可以点是，反正就是没有罢了" class="headerlink" title="其实没有 ，所以点否。也可以点是，反正就是没有罢了"></a>其实没有 ，所以点否。也可以点是，反正就是没有罢了</h5><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230413113921221.png" alt="image-20230413113921221" style="zoom: 33%;" /><h5 id="打开过后就是这样，emmm毫无头绪，怎么办呢？"><a href="#打开过后就是这样，emmm毫无头绪，怎么办呢？" class="headerlink" title="打开过后就是这样，emmm毫无头绪，怎么办呢？"></a>打开过后就是这样，emmm毫无头绪，怎么办呢？</h5><h5 id="没有思路肯定就是要去所有的东西啦【shift-F12】【也可以在视图-打开子视图-字串】里面找到哦"><a href="#没有思路肯定就是要去所有的东西啦【shift-F12】【也可以在视图-打开子视图-字串】里面找到哦" class="headerlink" title="没有思路肯定就是要去所有的东西啦【shift+F12】【也可以在视图-打开子视图-字串】里面找到哦"></a>没有思路肯定就是要去所有的东西啦【shift+F12】【也可以在视图-打开子视图-字串】里面找到哦</h5><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230413114307857.png" alt="image-20230413114307857" style="zoom:33%;" /><h5 id="我们肯定是要找flag啦，这里有三个……-【我也是小白也不懂，先打开这个wrong-flag-】看看吧"><a href="#我们肯定是要找flag啦，这里有三个……-【我也是小白也不懂，先打开这个wrong-flag-】看看吧" class="headerlink" title="我们肯定是要找flag啦，这里有三个…….【我也是小白也不懂，先打开这个wrong flag 】看看吧"></a>我们肯定是要找flag啦，这里有三个…….【我也是小白也不懂，先打开这个wrong flag 】看看吧</h5><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230413114530086.png" alt="image-20230413114530086" style="zoom:50%;" /><h5 id="这说明这个-wrong-flag-这个字符串是存放在内存中的，emmm"><a href="#这说明这个-wrong-flag-这个字符串是存放在内存中的，emmm" class="headerlink" title="这说明这个 wrong flag 这个字符串是存放在内存中的，emmm"></a>这说明这个 wrong flag 这个字符串是存放在内存中的，emmm</h5><h5 id="这里就去看看谁引用了这个wrong-flag吧【这里是用的“交叉引用”-右键-点击-或者用ctrl-x】"><a href="#这里就去看看谁引用了这个wrong-flag吧【这里是用的“交叉引用”-右键-点击-或者用ctrl-x】" class="headerlink" title="这里就去看看谁引用了这个wrong flag吧【这里是用的“交叉引用” 右键-点击   或者用ctrl+x】"></a>这里就去看看谁引用了这个wrong flag吧【这里是用的“交叉引用” 右键-点击   或者用ctrl+x】</h5><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230413114756665.png" alt="image-20230413114756665" style="zoom: 33%;" /><h5 id="打开过后是这样的一个东西【这样的一看就是汇编啦】"><a href="#打开过后是这样的一个东西【这样的一看就是汇编啦】" class="headerlink" title="打开过后是这样的一个东西【这样的一看就是汇编啦】"></a>打开过后是这样的一个东西【这样的一看就是汇编啦】</h5><h5 id="所以我们就用-Tab-键-来看伪代码咯-【F5】"><a href="#所以我们就用-Tab-键-来看伪代码咯-【F5】" class="headerlink" title="所以我们就用 Tab 键 来看伪代码咯  【F5】"></a>所以我们就用 Tab 键 来看伪代码咯  【F5】</h5><h5 id="它有一个提示：反正就会说可能会有误差啥的-不管他"><a href="#它有一个提示：反正就会说可能会有误差啥的-不管他" class="headerlink" title="它有一个提示：反正就会说可能会有误差啥的..不管他"></a>它有一个提示：反正就会说可能会有误差啥的..不管他</h5><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230413115016692.png" alt="image-20230413115016692" style="zoom:33%;" /><h5 id="打开就是这样的，读一读咯【这里很类似于C语言】"><a href="#打开就是这样的，读一读咯【这里很类似于C语言】" class="headerlink" title="打开就是这样的，读一读咯【这里很类似于C语言】"></a>打开就是这样的，读一读咯【这里很类似于C语言】</h5><h5 id="然后就是大概的看-里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag"><a href="#然后就是大概的看-里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag" class="headerlink" title="然后就是大概的看    里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag"></a>然后就是大概的看    里面有printf还有scanf还有if语句，if语句就是说把111【ascii】转化成48【axcii】然后就是正确的flag</h5><h5 id="去查看字符串Str2"><a href="#去查看字符串Str2" class="headerlink" title="去查看字符串Str2"></a>去查看字符串Str2</h5><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230413115354464.png" alt="image-20230413115354464" style="zoom: 50%;" /><h5 id="最后就需要把111改成48就好了"><a href="#最后就需要把111改成48就好了" class="headerlink" title="最后就需要把111改成48就好了"></a>最后就需要把111改成48就好了</h5><h5 id="flag"><a href="#flag" class="headerlink" title="flag"></a>flag</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flag&#123;hell0_w0rld&#125;</span><br></pre></td></tr></table></figure>]]></content>
       
       
       <categories>
           
-          <category> BUUCTF逆向题目 </category>
+          <category> Re题目 </category>
           
       </categories>
       
@@ -99,16 +99,16 @@
     
     
     <entry>
-      <title>1.easyre（1）</title>
-      <link href="/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-1-easyre/"/>
-      <url>/2023/05/17/BUUCTF%E5%88%B7%E9%A2%98%E6%97%85-1-easyre/</url>
+      <title>1.BUU-easyre（1）</title>
+      <link href="/2023/05/17/Re%E5%88%B7%E9%A2%98%E5%92%AF-1-BUU-easyre/"/>
+      <url>/2023/05/17/Re%E5%88%B7%E9%A2%98%E5%92%AF-1-BUU-easyre/</url>
       
         <content type="html"><![CDATA[<p>就是用ida打开后查看</p><p>一下就看到了flag … </p>]]></content>
       
       
       <categories>
           
-          <category> BUUCTF逆向题目 </category>
+          <category> Re题目 </category>
           
       </categories>
       
