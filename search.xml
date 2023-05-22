@@ -4,6 +4,57 @@
   
     
     <entry>
+      <title>逆向-GBD插件（27）</title>
+      <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-27-GDB%E6%8F%92%E4%BB%B6/"/>
+      <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-27-GDB%E6%8F%92%E4%BB%B6/</url>
+      
+        <content type="html"><![CDATA[<p>主要就是方便了linux 下的调试工具…</p><p>不是很会用</p><p>有3个插件</p><p><a href="https://blog.csdn.net/gatieme/article/details/63254211">https://blog.csdn.net/gatieme/article/details/63254211</a></p><p><img src="C:\Users\ASUS\AppData\Roaming\Typora\typora-user-images\image-20230521234013967.png" alt="image-20230521234013967"></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 二进制安全逆向 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title></title>
+      <link href="/2023/05/21/Re%E5%88%B7%E9%A2%98%E5%92%AF-5-BUU-%E6%96%B0%E5%B9%B4%E5%BF%AB%E4%B9%90/"/>
+      <url>/2023/05/21/Re%E5%88%B7%E9%A2%98%E5%92%AF-5-BUU-%E6%96%B0%E5%B9%B4%E5%BF%AB%E4%B9%90/</url>
+      
+        <content type="html"><![CDATA[<h5 id="首先用exeinfope-exe来查看壳"><a href="#首先用exeinfope-exe来查看壳" class="headerlink" title="首先用exeinfope.exe来查看壳"></a>首先用exeinfope.exe来查看壳</h5><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230418101111042.png" alt="image-20230418101111042"></p><h5 id="讲实话，看不懂只知道了是32位的，直接放入ida中…"><a href="#讲实话，看不懂只知道了是32位的，直接放入ida中…" class="headerlink" title="讲实话，看不懂只知道了是32位的，直接放入ida中…"></a>讲实话，看不懂只知道了是32位的，直接放入ida中…</h5><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230418101343245.png" alt="image-20230418101343245"></p><h5 id="很明显，这有问题。"><a href="#很明显，这有问题。" class="headerlink" title="很明显，这有问题。"></a>很明显，这有问题。</h5><h5 id="有问题当然要百度啦！"><a href="#有问题当然要百度啦！" class="headerlink" title="有问题当然要百度啦！"></a>有问题当然要百度啦！</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[ESP定律]以及UPX壳的特性</span><br></pre></td></tr></table></figure><h5 id="在上面的查壳的时候，发现确实有一个upx的东西"><a href="#在上面的查壳的时候，发现确实有一个upx的东西" class="headerlink" title="在上面的查壳的时候，发现确实有一个upx的东西"></a>在上面的查壳的时候，发现确实有一个upx的东西</h5><h5 id="ok，现在的问题就是脱壳咯"><a href="#ok，现在的问题就是脱壳咯" class="headerlink" title="ok，现在的问题就是脱壳咯"></a>ok，现在的问题就是脱壳咯</h5><h5 id="拖完壳后，放入ida中"><a href="#拖完壳后，放入ida中" class="headerlink" title="拖完壳后，放入ida中"></a>拖完壳后，放入ida中</h5><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230418200741410.png" alt="image-20230418200741410"></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flag&#123;HappyNewYear!&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>2.BUU-内涵的软件（4）</title>
+      <link href="/2023/05/21/Re%E5%88%B7%E9%A2%98%E5%92%AF-4-BUU-%E5%86%85%E6%B6%B5%E7%9A%84%E8%BD%AF%E4%BB%B6/"/>
+      <url>/2023/05/21/Re%E5%88%B7%E9%A2%98%E5%92%AF-4-BUU-%E5%86%85%E6%B6%B5%E7%9A%84%E8%BD%AF%E4%BB%B6/</url>
+      
+        <content type="html"><![CDATA[<p>flag{49d3c93df25caad81232130f3d2ebfad}</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230418093430783.png" alt="image-20230418093430783"></p><h5 id="进来没有任何思路，它定义了一些东西过后就进行了跳转。我们跟上看看"><a href="#进来没有任何思路，它定义了一些东西过后就进行了跳转。我们跟上看看" class="headerlink" title="进来没有任何思路，它定义了一些东西过后就进行了跳转。我们跟上看看"></a>进来没有任何思路，它定义了一些东西过后就进行了跳转。我们跟上看看</h5><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230418093748609.png" alt="image-20230418093748609"></p><h5 id="emmm，看着像flag-提交了一下就对了……"><a href="#emmm，看着像flag-提交了一下就对了……" class="headerlink" title="emmm，看着像flag 提交了一下就对了……"></a>emmm，看着像flag 提交了一下就对了……</h5><h5 id="看看其他的吧，全是跳转，蒙蔽得很"><a href="#看看其他的吧，全是跳转，蒙蔽得很" class="headerlink" title="看看其他的吧，全是跳转，蒙蔽得很"></a>看看其他的吧，全是跳转，蒙蔽得很</h5>]]></content>
+      
+      
+      <categories>
+          
+          <category> Re题目 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>逆向-linux动态调试之GDB（26）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-26-Linux%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%A5%9E%E5%99%A8%E4%B9%8BGDB%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-26-Linux%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%A5%9E%E5%99%A8%E4%B9%8BGDB%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8/</url>
@@ -483,7 +534,7 @@
       <link href="/2023/05/06/%E6%80%BB%E7%BB%93/"/>
       <url>/2023/05/06/%E6%80%BB%E7%BB%93/</url>
       
-        <content type="html"><![CDATA[<h1 id="2023-5-14"><a href="#2023-5-14" class="headerlink" title="2023-5-14"></a>2023-5-14</h1><p>这周也没有放弃，也在认真的更新自己的二进制安全的文章。</p><p>加油加油！！<br>今天安装插件。蛮奇怪的，，，，最后装了一个集成版本的…..<br>希望以后能多出CTF题目吧…..<br>还有C 语言的 学习呢…</p><hr><h1 id="2023-5-6"><a href="#2023-5-6" class="headerlink" title="2023-5-6"></a>2023-5-6</h1><p>最近稍微接触一下逆向吧。这个路还蛮遥远的…</p><p>看了一篇文章，稍微记录一下未来日子所需要学的东西</p><p>文章：<a href="https://www.52pojie.cn/thread-1324083-1-1.html">https://www.52pojie.cn/thread-1324083-1-1.html</a></p><p>1.计算机组成原理–<strong>《计算机组成原理》白中英</strong></p><p>2.8086汇编–<strong>《汇编语言（第四版）》王爽</strong></p><p>3.WIN32汇编–<strong>《windows环境下32位汇编语言程序设计》罗云彬</strong></p><p>4.找一本64位的书–<strong>《x86_x64体系探索及编程》</strong></p><p>5.扩展：深入汇编，<strong>《汇编语言编程艺术》《intel汇编语言程序设计》《IBM PC汇编语言程序设计》</strong></p><p>6.C语言–<strong>《C Primer Plus》《C程序设计语言》</strong>入门之作品</p><p>7.深入学编程–<strong>《C陷阱于缺陷》《C专家汇编》《程序员的自我修养》</strong></p><p>8.C++ – <strong>《C++ Primer Plus》</strong></p><p>9.算法于数据结构–<strong>《数据结构（C语言版）》严薇《算法图解》《算法导论》《数据结构与算法分析：C语言描述》</strong></p><p>10.加密和解密– 《<strong>加密与解密</strong>》看雪</p><p>11.逆向知识点–《<strong>C++反汇编与逆向分析技术揭秘</strong>》《<strong>REVERSING：逆向工程揭密</strong>》《<strong>逆向工程核心原理</strong>》</p><p>12.API基础–《<strong>Windows程序设计</strong>》</p><p>13.VC++ –《<strong>VC++深入详解</strong>》，高级语言有目的性的学习</p><p>14.windows系统原理 – 《<strong>深入理解计算机系统</strong>》，《<strong>WINDOWS.核心编程</strong>》，《<strong>IDA Pro权威指南</strong>》</p><p>15.WIN PE  《<strong>windows pe权威指南</strong>》</p><p>16.Windows驱动  《<strong>Windows内核安全与驱动开发</strong>》，《<strong>Windows驱动开发技术详解</strong>》</p><hr><p>哈哈哈哈！任重而道远啊~</p><p>我在学到这个win32的时候，实属有点枯燥无力。所以最近去研究研究了一下二进制安全–这个内容是更着网上的教程一步一步走的。怎么说呢，我如果按照上面的顺序学下来，哈哈哈可能有点脑壳痛。所以呢，这个就按照着这个路线的大概的循序下去。中间插入小插曲，比如【二进制安全的学习】…想学的东西太多啦，要学的东西也很多，时间总是过得如此的快，今天又到了晚上11：36了。</p><p>学安全嘛，各个方向都懂一点，有一项很专精，就会很厉害。经过我对这个渗透和逆向的了解。我确实都喜欢，哈哈哈哈。反正日子还多嘞，现在才19岁，还没到20岁【我还年轻，未来都是我的】哈哈哈~~~</p><p>送我自己一段话吧：<br>我的快乐别人不懂，别人的快乐我不必懂~</p><p>希望我能在这条路上越行越远~</p><hr><p>也许这个魔改的日子要往后调整了，待我暑假吧~</p>]]></content>
+        <content type="html"><![CDATA[<h1 id="2023-5-21"><a href="#2023-5-21" class="headerlink" title="2023-5-21"></a>2023-5-21</h1><p>这周也有在认真。和好几个男孩子过的520，emmm，下一次希望有一个女朋友【哈哈哈哈】。</p><p>然后呢，逆向已经在慢慢入门了，5月的A&amp;D协会的比赛，侥幸拿到了第一。肯定了我以后学Re的思路。</p><p>慢慢的，就要开始写题咯</p><hr><h1 id="2023-5-14"><a href="#2023-5-14" class="headerlink" title="2023-5-14"></a>2023-5-14</h1><p>这周也没有放弃，也在认真的更新自己的二进制安全的文章。</p><p>加油加油！！<br>今天安装插件。蛮奇怪的，，，，最后装了一个集成版本的…..<br>希望以后能多出CTF题目吧…..<br>还有C 语言的 学习呢…</p><p>一段话：</p><p>可以回头看，但不能回头走！</p><hr><h1 id="2023-5-6"><a href="#2023-5-6" class="headerlink" title="2023-5-6"></a>2023-5-6</h1><p>最近稍微接触一下逆向吧。这个路还蛮遥远的…</p><p>看了一篇文章，稍微记录一下未来日子所需要学的东西</p><p>文章：<a href="https://www.52pojie.cn/thread-1324083-1-1.html">https://www.52pojie.cn/thread-1324083-1-1.html</a></p><p>1.计算机组成原理–<strong>《计算机组成原理》白中英</strong></p><p>2.8086汇编–<strong>《汇编语言（第四版）》王爽</strong></p><p>3.WIN32汇编–<strong>《windows环境下32位汇编语言程序设计》罗云彬</strong></p><p>4.找一本64位的书–<strong>《x86_x64体系探索及编程》</strong></p><p>5.扩展：深入汇编，<strong>《汇编语言编程艺术》《intel汇编语言程序设计》《IBM PC汇编语言程序设计》</strong></p><p>6.C语言–<strong>《C Primer Plus》《C程序设计语言》</strong>入门之作品</p><p>7.深入学编程–<strong>《C陷阱于缺陷》《C专家汇编》《程序员的自我修养》</strong></p><p>8.C++ – <strong>《C++ Primer Plus》</strong></p><p>9.算法于数据结构–<strong>《数据结构（C语言版）》严薇《算法图解》《算法导论》《数据结构与算法分析：C语言描述》</strong></p><p>10.加密和解密– 《<strong>加密与解密</strong>》看雪</p><p>11.逆向知识点–《<strong>C++反汇编与逆向分析技术揭秘</strong>》《<strong>REVERSING：逆向工程揭密</strong>》《<strong>逆向工程核心原理</strong>》</p><p>12.API基础–《<strong>Windows程序设计</strong>》</p><p>13.VC++ –《<strong>VC++深入详解</strong>》，高级语言有目的性的学习</p><p>14.windows系统原理 – 《<strong>深入理解计算机系统</strong>》，《<strong>WINDOWS.核心编程</strong>》，《<strong>IDA Pro权威指南</strong>》</p><p>15.WIN PE  《<strong>windows pe权威指南</strong>》</p><p>16.Windows驱动  《<strong>Windows内核安全与驱动开发</strong>》，《<strong>Windows驱动开发技术详解</strong>》</p><hr><p>哈哈哈哈！任重而道远啊~</p><p>我在学到这个win32的时候，实属有点枯燥无力。所以最近去研究研究了一下二进制安全–这个内容是更着网上的教程一步一步走的。怎么说呢，我如果按照上面的顺序学下来，哈哈哈可能有点脑壳痛。所以呢，这个就按照着这个路线的大概的循序下去。中间插入小插曲，比如【二进制安全的学习】…想学的东西太多啦，要学的东西也很多，时间总是过得如此的快，今天又到了晚上11：36了。</p><p>学安全嘛，各个方向都懂一点，有一项很专精，就会很厉害。经过我对这个渗透和逆向的了解。我确实都喜欢，哈哈哈哈。反正日子还多嘞，现在才19岁，还没到20岁【我还年轻，未来都是我的】哈哈哈~~~</p><p>送我自己一段话吧：<br>我的快乐别人不懂，别人的快乐我不必懂~</p><p>希望我能在这条路上越行越远~</p><hr><p>也许这个魔改的日子要往后调整了，待我暑假吧~</p>]]></content>
       
       
       
